@@ -1,16 +1,30 @@
-import { db } from "@/lib/firebase/firebase";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { auth } from "@/lib/firebase/firebase";
+import { Profile } from "@/models/models";
 
-export async function getUserDataByID(uid: string) {
-	const q = query(collection(db, "users"), where("uid", "==", uid));
-	const user = await getDocs(q);
-	const userData = user.docs.map((doc) => ({
-		id: doc.id,
-		uid: doc.data().uid,
-		email: doc.data().email,
-		name: doc.data().name,
-		profilePic: doc.data().profilePic,
-	}))[0];
+export async function initialProfile() {
+	const user = auth.currentUser;
+	if (!user) {
+		return { profile: null };
+	}
 
-	return { data: userData };
+	const profile = await Profile.findOne("userId", "==", user.uid);
+	if (profile) {
+		return {
+			profile,
+		};
+	}
+
+	const newProfile = new Profile();
+	newProfile.userId = user.uid;
+	newProfile.name = user.displayName || "";
+	newProfile.email = user.email || "";
+	newProfile.imageUrl = user.photoURL || "";
+	newProfile.createdAt = new Date().toISOString();
+	newProfile.updatedAt = new Date().toISOString();
+
+	await newProfile.save(user.uid);
+
+	return {
+		profile: newProfile,
+	};
 }

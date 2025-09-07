@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
 			},
 		],
 	},
+	serverExternalPackages: ["@arbel/firebase-orm"],
 };
 
 export default nextConfig;

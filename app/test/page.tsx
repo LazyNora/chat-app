@@ -1,12 +1,22 @@
-import { SignupForm } from "@/components/auth/signup-form";
-import React from "react";
+"use client";
 
-const Page = () => {
-  return (
-    <div className="w-fit items-center my-auto justify-self-center">
-      <SignupForm />
-    </div>
-  );
-};
+import { UploadButton, UploadDropzone } from "@/lib/uploadthing";
 
-export default Page;
+export default function TestPage() {
+	return (
+		<main className="flex min-h-screen flex-col items-center justify-between p-24">
+			<UploadDropzone
+				endpoint="imageUploader"
+				onClientUploadComplete={(res) => {
+					// Do something with the response
+					console.log("Files: ", res);
+					alert("Upload Completed");
+				}}
+				onUploadError={(error: Error) => {
+					// Do something with the error.
+					alert(`ERROR! ${error.message}`);
+				}}
+			/>
+		</main>
+	);
+}
