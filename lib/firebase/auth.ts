@@ -1,64 +1,36 @@
-import { createSession } from "@/actions/auth-actions";
-import { auth } from "@/lib/firebase/firebase";
-import {
-  type User,
-  signInWithEmailAndPassword as _signInWithEmailAndPassword,
-  createUserWithEmailAndPassword as _createUserWithEmailAndPassword,
-  onAuthStateChanged as _onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithPopup,
-} from "firebase/auth";
+import { UserCredential } from "firebase/auth";
 
-export function onAuthStateChanged(callback: (authUser: User | null) => void) {
-  return _onAuthStateChanged(auth, callback);
+export async function login(token: string) {
+	const headers: Record<string, string> = {
+		Authorization: `Bearer ${token}`,
+	};
+
+	await fetch("/api/login", {
+		method: "GET",
+		headers,
+	});
 }
 
-export async function signInWithGoogle() {
-  const provider = new GoogleAuthProvider();
+export async function loginWithCredential(credential: UserCredential) {
+	const idToken = await credential.user.getIdToken();
 
-  try {
-    const result = await signInWithPopup(auth, provider);
-
-    if (!result || !result.user) {
-      throw new Error("Google sign in failed");
-    }
-
-    await createSession(result.user.uid);
-
-    return result.user;
-  } catch (error) {
-    console.error("Error signing in with Google:", error);
-  }
+	await login(idToken);
 }
 
-export async function signInWithEmailAndPassword(
-  email: string,
-  password: string
-) {
-  try {
-    const result = await _signInWithEmailAndPassword(auth, email, password);
-    return result.user;
-  } catch (error) {
-    console.error("Error signing in with email and password:", error);
-  }
+export async function logout() {
+	const headers: Record<string, string> = {};
+
+	await fetch("/api/logout", {
+		method: "GET",
+		headers,
+	});
 }
 
-export async function createUserWithEmailAndPassword(
-  email: string,
-  password: string
-) {
-  try {
-    const result = await _createUserWithEmailAndPassword(auth, email, password);
-    return result.user;
-  } catch (error) {
-    console.error("Error creating user with email and password:", error);
-  }
-}
+export async function checkEmailVerification() {
+	const headers: Record<string, string> = {};
 
-export async function signOut() {
-  try {
-    await auth.signOut();
-  } catch (error) {
-    console.error("Error signing out:", error);
-  }
+	await fetch("/api/check-email-verification", {
+		method: "GET",
+		headers,
+	});
 }

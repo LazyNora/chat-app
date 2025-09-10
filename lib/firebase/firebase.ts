@@ -1,32 +1,44 @@
-"use client";
-
-// Import the functions you need from the SDKs you need
-import { getApps, initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { getApp, getApps, initializeApp, initializeServerApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { FirestoreOrmRepository } from "@arbel/firebase-orm";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getAuth, inMemoryPersistence, setPersistence } from "firebase/auth";
+import { clientConfig } from "@/config/client-config";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-	apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-	authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-	projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-	storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-	messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-	appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+export const getFirebaseApp = () => {
+	if (getApps().length) {
+		return getApp();
+	}
+
+	return initializeApp(clientConfig);
 };
 
-// Initialize Firebase
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+export function getFirebaseAuth() {
+	const auth = getAuth(getFirebaseApp());
 
-// Initialize Firestore ORM for client-side use
-if (typeof window !== "undefined") {
-	FirestoreOrmRepository.initGlobalConnection(db);
+	// App relies only on server token. We make sure Firebase does not store credentials in the browser.
+	// See: https://github.com/awinogrodzki/next-firebase-auth-edge/issues/143
+	setPersistence(auth, inMemoryPersistence);
+
+	return auth;
 }
 
-export { auth, db };
+export function getFirestoreDB() {
+	const db = getFirestore(getFirebaseApp());
+
+	if (typeof window !== "undefined") {
+		FirestoreOrmRepository.initGlobalConnection(db);
+	}
+
+	return db;
+}
+
+export async function getServerFirebase(authIdToken?: string) {
+	const app = initializeServerApp(clientConfig, { authIdToken });
+	const auth = getAuth(app);
+
+	await auth.authStateReady();
+
+	const db = getFirestore(app);
+
+	return { app, auth, db };
+}
