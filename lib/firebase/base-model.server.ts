@@ -1,24 +1,10 @@
-import { getFirestoreDB } from "./firebase";
-import type { WhereFilterOp } from "firebase/firestore";
-import {
-	collection,
-	doc,
-	getDoc,
-	getDocs,
-	setDoc,
-	deleteDoc,
-	query,
-	where,
-	orderBy,
-	limit,
-	startAfter,
-	onSnapshot,
-	QueryConstraint,
-	DocumentData,
-	QueryDocumentSnapshot,
-} from "firebase/firestore";
+import type { WhereFilterOp } from "firebase-admin/firestore";
+import { getFirestore } from "firebase-admin/firestore";
+import type { DocumentData } from "firebase-admin/firestore";
+import { getFirebaseAdminApp } from "./firebase-admin";
 
-const db = getFirestoreDB();
+// Default instance
+const db = getFirestore(getFirebaseAdminApp());
 
 export interface ModelConstructor<T extends BaseModel = BaseModel> {
 	new (): T;
@@ -33,6 +19,7 @@ export interface ModelConstructor<T extends BaseModel = BaseModel> {
 
 export class BaseModel {
 	protected static collectionName: string = "";
+
 	static getCollectionName(): string {
 		return this.collectionName;
 	}
@@ -48,26 +35,30 @@ export class BaseModel {
 		this.id = id;
 	}
 
-	// Save the document
-	async save(): Promise<void> {
-		const collectionRef = collection(db, (this.constructor as typeof BaseModel).collectionName);
+	// Save the document with optional custom ID
+	async save(id?: string): Promise<void> {
+		const collectionRef = db.collection((this.constructor as typeof BaseModel).collectionName);
 		const data = this.toJSON();
 
-		if (this.id) {
-			await setDoc(doc(collectionRef, this.id), data);
+		if (id || this.id) {
+			const docId = id || this.id;
+			await collectionRef.doc(docId).set(data);
+			this.id = docId;
 		} else {
-			const docRef = doc(collectionRef);
+			const docRef = collectionRef.doc();
 			this.id = docRef.id;
-			await setDoc(docRef, data);
+			await docRef.set(data);
 		}
 	}
 
 	// Load a document by ID
 	async load(id: string): Promise<void> {
-		const docRef = doc(db, (this.constructor as typeof BaseModel).collectionName, id);
-		const docSnap = await getDoc(docRef);
+		const docSnap = await db
+			.collection((this.constructor as typeof BaseModel).collectionName)
+			.doc(id)
+			.get();
 
-		if (docSnap.exists()) {
+		if (docSnap.exists) {
 			this.fromJSON({ id: docSnap.id, ...docSnap.data() });
 		} else {
 			throw new Error("Document not found");
@@ -78,8 +69,10 @@ export class BaseModel {
 	async destroy(): Promise<void> {
 		if (!this.id) throw new Error("Cannot delete document without ID");
 
-		const docRef = doc(db, (this.constructor as typeof BaseModel).collectionName, this.id);
-		await deleteDoc(docRef);
+		await db
+			.collection((this.constructor as typeof BaseModel).collectionName)
+			.doc(this.id)
+			.delete();
 	}
 
 	// Convert model to JSON for Firestore
@@ -178,10 +171,9 @@ export class BaseModel {
 
 	// Get all documents
 	static async getAll<T extends BaseModel>(this: ModelConstructor<T>): Promise<T[]> {
-		const collectionRef = collection(db, this.getCollectionName());
-		const querySnapshot = await getDocs(collectionRef);
+		const snapshot = await db.collection(this.getCollectionName()).get();
 
-		return querySnapshot.docs.map((doc) => {
+		return snapshot.docs.map((doc) => {
 			const instance = new this();
 			(instance as any).fromJSON({ id: doc.id, ...doc.data() });
 			return instance;
@@ -196,9 +188,7 @@ export class BaseModel {
 		this: ModelConstructor<T>,
 		callback: (models: T[]) => void
 	): () => void {
-		const collectionRef = collection(db, this.getCollectionName());
-
-		return onSnapshot(collectionRef, (snapshot) => {
+		return db.collection(this.getCollectionName()).onSnapshot((snapshot) => {
 			const models = snapshot.docs.map((doc) => {
 				const instance = new this();
 				instance.fromJSON({ id: doc.id, ...doc.data() });
@@ -211,45 +201,47 @@ export class BaseModel {
 	on(callback: () => void): () => void {
 		if (!this.id) throw new Error("Cannot listen to document without ID");
 
-		const docRef = doc(db, (this.constructor as typeof BaseModel).collectionName, this.id);
-		return onSnapshot(docRef, (snapshot) => {
-			if (snapshot.exists()) {
-				this.fromJSON({ id: snapshot.id, ...snapshot.data() });
-				callback();
-			}
-		});
+		return db
+			.collection((this.constructor as typeof BaseModel).collectionName)
+			.doc(this.id)
+			.onSnapshot((snapshot) => {
+				if (snapshot.exists) {
+					this.fromJSON({ id: snapshot.id, ...snapshot.data() });
+					callback();
+				}
+			});
 	}
 }
 
 class QueryBuilder<T extends BaseModel> {
-	private constraints: QueryConstraint[] = [];
+	private query: FirebaseFirestore.Query;
 
-	constructor(private ModelClass: new () => T) {}
+	constructor(private ModelClass: new () => T) {
+		this.query = db.collection((this.ModelClass as any).collectionName);
+	}
 
 	where(field: string, operator: WhereFilterOp, value: any): QueryBuilder<T> {
-		this.constraints.push(where(field, operator, value));
+		this.query = this.query.where(field, operator, value);
 		return this;
 	}
 
 	orderBy(field: string, direction: "asc" | "desc" = "asc"): QueryBuilder<T> {
-		this.constraints.push(orderBy(field, direction));
+		this.query = this.query.orderBy(field, direction);
 		return this;
 	}
 
 	limit(limitCount: number): QueryBuilder<T> {
-		this.constraints.push(limit(limitCount));
+		this.query = this.query.limit(limitCount);
 		return this;
 	}
 
 	startAfter(value: any): QueryBuilder<T> {
-		this.constraints.push(startAfter(value));
+		this.query = this.query.startAfter(value);
 		return this;
 	}
 
 	async get(): Promise<T[]> {
-		const collectionRef = collection(db, (this.ModelClass as any).collectionName);
-		const q = query(collectionRef, ...this.constraints);
-		const querySnapshot = await getDocs(q);
+		const querySnapshot = await this.query.get();
 
 		return querySnapshot.docs.map((doc) => {
 			const instance = new this.ModelClass();

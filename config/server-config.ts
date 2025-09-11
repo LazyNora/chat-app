@@ -30,7 +30,7 @@ export const authConfig = {
 	// Set to false if you're not planning to use `signInWithCustomToken` Firebase Client SDK method
 	enableCustomToken: true,
 	enableTokenRefreshOnExpiredKidHeader: true,
-	debug: true,
+	debug: false,
 	getMetadata: async (tokens: TokenSet) => {
 		return { uid: tokens.decodedIdToken.uid, timestamp: new Date().getTime() };
 	},

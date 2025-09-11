@@ -1,4 +1,4 @@
-import { BaseModel } from "../lib/firebase/base-model";
+import { BaseModel } from "../lib/firebase/base-model.client";
 
 export enum MemberRole {
 	ADMIN = "ADMIN",

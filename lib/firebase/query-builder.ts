@@ -12,7 +12,7 @@ import {
 	DocumentData,
 	QueryDocumentSnapshot,
 } from "firebase/firestore";
-import { BaseModel } from "./base-model";
+import { BaseModel } from "./base-model.client";
 
 export class QueryBuilder<T extends BaseModel> {
 	private constraints: QueryConstraint[] = [];
@@ -29,7 +29,7 @@ export class QueryBuilder<T extends BaseModel> {
 		return this;
 	}
 
-	orderBy(field: string, direction: 'asc' | 'desc' = 'asc'): QueryBuilder<T> {
+	orderBy(field: string, direction: "asc" | "desc" = "asc"): QueryBuilder<T> {
 		this.constraints.push(orderBy(field, direction));
 		return this;
 	}
@@ -48,8 +48,8 @@ export class QueryBuilder<T extends BaseModel> {
 		const db = getFirestoreDB();
 		const q = query(collection(db, this.collectionName), ...this.constraints);
 		const querySnapshot = await getDocs(q);
-		
-		return querySnapshot.docs.map(doc => {
+
+		return querySnapshot.docs.map((doc) => {
 			const instance = new this.ModelClass();
 			return Object.assign(instance, { id: doc.id, ...doc.data() });
 		});

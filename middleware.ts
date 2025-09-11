@@ -62,5 +62,6 @@ export const config = {
 		// App api routes
 		"/api/custom-claims",
 		"/api/user-counters",
+		"/api/profile",
 	],
 };
