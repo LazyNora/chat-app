@@ -90,7 +90,12 @@ export class BaseModel {
 	protected toJSON(): DocumentData {
 		const json: DocumentData = {};
 		for (const [key, value] of Object.entries(this)) {
-			if (key !== "id" && typeof value !== "function" && !Array.isArray(value)) {
+			if (
+				key !== "id" &&
+				typeof value !== "function" &&
+				!Array.isArray(value) &&
+				value !== undefined
+			) {
 				json[key] = value;
 			}
 		}
