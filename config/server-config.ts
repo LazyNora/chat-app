@@ -28,10 +28,9 @@ export const authConfig = {
 	// Set to false in Firebase Hosting environment due to https://stackoverflow.com/questions/44929653/firebase-cloud-function-wont-store-cookie-named-other-than-session
 	enableMultipleCookies: true,
 	// Set to false if you're not planning to use `signInWithCustomToken` Firebase Client SDK method
-	enableCustomToken: false,
+	enableCustomToken: true,
 	enableTokenRefreshOnExpiredKidHeader: true,
-	debug: false,
-	tenantId: clientConfig.tenantId,
+	debug: true,
 	getMetadata: async (tokens: TokenSet) => {
 		return { uid: tokens.decodedIdToken.uid, timestamp: new Date().getTime() };
 	},

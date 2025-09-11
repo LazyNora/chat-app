@@ -20,7 +20,6 @@ export async function middleware(request: NextRequest) {
 		cookieSignatureKeys: authConfig.cookieSignatureKeys,
 		serviceAccount: authConfig.serviceAccount,
 		enableTokenRefreshOnExpiredKidHeader: authConfig.enableTokenRefreshOnExpiredKidHeader,
-		tenantId: authConfig.tenantId,
 		dynamicCustomClaimsKeys: authConfig.dynamicCustomClaimsKeys,
 		handleValidToken: async ({ token, decodedToken, customToken }, headers) => {
 			// Authenticated user should not be able to access /login, /register and /reset-password routes

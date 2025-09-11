@@ -12,7 +12,7 @@ export default async function Home() {
 
 	// Show user info for logged in user
 	return (
-		<div className="p-8">
+		<div className="p-8 bg-muted">
 			<h1 className="text-2xl font-bold mb-4">Welcome!</h1>
 			<UserProfile />
 		</div>

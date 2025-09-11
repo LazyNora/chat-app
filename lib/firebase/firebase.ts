@@ -25,9 +25,9 @@ export function getFirebaseAuth() {
 export function getFirestoreDB() {
 	const db = getFirestore(getFirebaseApp());
 
-	if (typeof window !== "undefined") {
-		FirestoreOrmRepository.initGlobalConnection(db);
-	}
+	// if (typeof window !== "undefined") {
+	// 	FirestoreOrmRepository.initGlobalConnection(db);
+	// }
 
 	return db;
 }
