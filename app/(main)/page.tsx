@@ -1,57 +1,39 @@
-"use client";
+import { authConfig } from "@/config/server-config";
+import { getTokens } from "next-firebase-auth-edge";
+import { cookies } from "next/headers";
+import UserProfile from "./UserProfile";
+import { initialProfile } from "@/actions/user-actions";
 
-import { deleteSession } from "@/actions/auth-actions";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useFirebaseAuth";
-import { signOut } from "@/lib/firebase/auth";
-import Image from "next/image";
-import { useRouter } from "next/navigation";
+export default async function Home() {
+	const tokens = await getTokens(await cookies(), authConfig);
 
-export default function Home() {
-  const { userData, loading } = useAuth();
-  const router = useRouter();
+	if (!tokens) {
+		throw new Error("Cannot get counter of unauthenticated user");
+	}
 
-  const handleLogout = async () => {
-    await signOut();
-    await deleteSession();
-  };
+	const profile = await initialProfile();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!userData) {
-    // While redirecting, show nothing
-    return null;
-  }
-
-  // Show user info for logged in user
-  return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-4">Welcome!</h1>
-      <div className="bg-muted rounded p-4">
-        <div>
-          <strong>UID:</strong> {userData.uid}
-        </div>
-        <div>
-          <strong>Email:</strong> {userData.email}
-        </div>
-        <div>
-          <strong>Name:</strong> {userData.name}
-        </div>
-        <div>
-          <strong>Profile Picture:</strong>{" "}
-          {userData.profilePic ? (
-            <Image
-              src={userData.profilePic}
-              alt="Profile Picture"
-              width={100}
-              height={100}
-            />
-          ) : null}
-        </div>
-      </div>
-      <Button onClick={handleLogout}>Logout</Button>
-    </div>
-  );
+	// Show user info for logged in user
+	return (
+		<div className="p-8">
+			<h1 className="text-2xl font-bold mb-4">Welcome!</h1>
+			<UserProfile />
+			{profile && (
+				<div className="mt-4 p-4 border rounded bg-muted">
+					<h2 className="text-lg font-bold mb-2">Profile Information (Server Action)</h2>
+					<p className="mb-1">Name: {profile.name}</p>
+					<p className="mb-1">Email: {profile.email}</p>
+					{profile.imageUrl && (
+						<img
+							src={profile.imageUrl}
+							alt="Profile Image"
+							className="mt-2 w-24 h-24 rounded-full"
+						/>
+					)}
+					<p className="mb-1">Created At: {profile.createdAt}</p>
+					<p className="mb-1">Updated At: {profile.updatedAt}</p>
+				</div>
+			)}
+		</div>
+	);
 }

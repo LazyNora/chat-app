@@ -1,42 +1,67 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { authMiddleware, redirectToHome, redirectToLogin } from "next-firebase-auth-edge";
+import { authConfig } from "./config/server-config";
 
-// List of public/auth routes that do NOT require authentication
-const AUTH_ROUTES = ["/login", "/signup", "/forgot-password"];
-const PUBLIC_ROUTES = ["/api/uploadthing"];
+const PRIVATE_PATHS = ["/", "/profile"];
+const PUBLIC_PATHS = ["/register", "/login", "/reset-password"];
 
-export function middleware(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
-  const session = request.cookies.get("__session")?.value;
+export async function middleware(request: NextRequest) {
+	return authMiddleware(request, {
+		loginPath: "/api/login",
+		logoutPath: "/api/logout",
+		refreshTokenPath: "/api/refresh-token",
+		debug: authConfig.debug,
+		enableMultipleCookies: authConfig.enableMultipleCookies,
+		enableCustomToken: authConfig.enableCustomToken,
+		apiKey: authConfig.apiKey,
+		cookieName: authConfig.cookieName,
+		cookieSerializeOptions: authConfig.cookieSerializeOptions,
+		cookieSignatureKeys: authConfig.cookieSignatureKeys,
+		serviceAccount: authConfig.serviceAccount,
+		enableTokenRefreshOnExpiredKidHeader: authConfig.enableTokenRefreshOnExpiredKidHeader,
+		dynamicCustomClaimsKeys: authConfig.dynamicCustomClaimsKeys,
+		handleValidToken: async ({ token, decodedToken, customToken }, headers) => {
+			// Authenticated user should not be able to access /login, /register and /reset-password routes
+			if (PUBLIC_PATHS.includes(request.nextUrl.pathname)) {
+				return redirectToHome(request);
+			}
 
-  if (PUBLIC_ROUTES.some((route) => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
+			return NextResponse.next({
+				request: {
+					headers,
+				},
+			});
+		},
+		handleInvalidToken: async (_reason) => {
+			return redirectToLogin(request, {
+				path: "/login",
+				privatePaths: PRIVATE_PATHS,
+			});
+		},
+		handleError: async (error) => {
+			console.error("Unhandled authentication error", { error });
 
-  // If user is logged in and visits an auth route, redirect them away
-  if (session && AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
-    // Use redirect param if present, else default to home
-    const redirectParam = request.nextUrl.searchParams.get("redirect") || "/";
-    return NextResponse.redirect(new URL(redirectParam, request.url));
-  }
-
-  // Allow public/auth routes for unauthenticated users
-  if (AUTH_ROUTES.some((route) => pathname.startsWith(route))) {
-    return NextResponse.next();
-  }
-
-  // If not authenticated, redirect to login with redirect param
-  if (!session) {
-    const redirectTo = pathname + (search ? search : "");
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", redirectTo);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // Authenticated, allow
-  return NextResponse.next();
+			return redirectToLogin(request, {
+				path: "/login",
+				privatePaths: PRIVATE_PATHS,
+			});
+		},
+		getMetadata: authConfig.getMetadata,
+	});
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|static|favicon.ico).*)"],
+	matcher: [
+		"/",
+		"/((?!_next|favicon.ico|__/auth|__/firebase|api|.*\\.).*)",
+		// Middleware api routes
+		"/api/login",
+		"/api/logout",
+		"/api/refresh-token",
+		// App api routes
+		"/api/custom-claims",
+		"/api/user-counters",
+		"/api/profile",
+	],
 };

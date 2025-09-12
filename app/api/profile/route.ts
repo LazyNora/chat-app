@@ -1,12 +1,10 @@
-"use server";
-
 import { authConfig } from "@/config/server-config";
 import { Profile } from "@/models/models.server";
 import { getTokens } from "next-firebase-auth-edge";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function initialProfile() {
-	const tokens = await getTokens(await cookies(), authConfig);
+export async function GET(request: NextRequest) {
+	const tokens = await getTokens(request.cookies, authConfig);
 
 	if (!tokens) {
 		throw new Error("User is not authenticated");
@@ -15,7 +13,7 @@ export async function initialProfile() {
 	const profile = await Profile.findOne<Profile>("userId", "==", tokens.decodedToken.uid);
 
 	if (profile) {
-		return profile;
+		return NextResponse.json({ profile });
 	}
 
 	const newProfile = new Profile();
@@ -28,5 +26,5 @@ export async function initialProfile() {
 
 	await newProfile.save(tokens.decodedToken.uid);
 
-	return newProfile;
+	return NextResponse.json({ profile: newProfile });
 }
