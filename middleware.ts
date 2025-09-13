@@ -63,5 +63,7 @@ export const config = {
 		"/api/custom-claims",
 		"/api/user-counters",
 		"/api/profile",
+		"/api/servers/create",
+		"/api/servers/uploadthing",
 	],
 };
