@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { redirect, useRouter } from "next/navigation";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
@@ -34,6 +34,7 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { FileUpload } from "../file-upload";
+import { useModal } from "@/hooks/use-modal-store";
 
 const formSchema = z.object({
   serverName: z.string().min(1, { message: "Server name is required" }),
@@ -51,17 +52,14 @@ const inviteFormSchema = z.object({
     }),
 });
 
-export const InitialModal = () => {
-  const [isMounted, setIsMounted] = useState(false);
+export const CreateServerModal = () => {
+  const { isOpen, onClose, type } = useModal();
+  const isModalOpen = isOpen && type === "createServer";
   const [formType, setFormType] = useState<"selection" | "create" | "invite">(
     "selection"
   );
 
   const router = useRouter();
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -90,11 +88,11 @@ export const InitialModal = () => {
         body: JSON.stringify(values),
       });
       const data = await response.json();
-      console.log(data);
       if (response.ok && data.serverId) {
         toast.success("Server created successfully");
         router.refresh();
         form.reset();
+        onClose();
       } else {
         toast.error(data.messages || data.message || "Error creating server");
       }
@@ -119,6 +117,7 @@ export const InitialModal = () => {
       if (response.ok) {
         toast.success(data.messages || "Joined server successfully");
         inviteForm.reset();
+        onClose();
         router.refresh();
       } else {
         toast.error(data.messages || "Error joining server");
@@ -128,25 +127,17 @@ export const InitialModal = () => {
       toast.error("Something went wrong. Please try again.");
     }
   };
-
-  if (!isMounted) {
-    return null;
-  }
-
+  const handleClose = () => {
+    onClose();
+    setFormType("selection");
+    form.reset();
+    inviteForm.reset();
+  };
   return (
-    <Dialog
-      open
-      onOpenChange={(open) => {
-        if (!open) {
-          setFormType("selection");
-          form.reset();
-          inviteForm.reset();
-        }
-      }}
-    >
-      {/* <DialogTrigger asChild>
+    <Dialog open={isModalOpen} onOpenChange={handleClose}>
+      <DialogTrigger asChild>
         <CirclePlus />
-      </DialogTrigger> */}
+      </DialogTrigger>
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6 relative">
           {formType !== "selection" && (

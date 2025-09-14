@@ -1,13 +1,7 @@
 import React from "react";
-interface PageProps {
-  params: Promise<{
-    serverId: string;
-  }>;
-}
 
-const Page = async ({ params }: PageProps) => {
-  const { serverId } = await params;
-  return <div>Page: {serverId}</div>;
+const Page = () => {
+  return <div>dassd</div>;
 };
 
 export default Page;
