@@ -144,9 +144,6 @@ export const InitialModal = () => {
         }
       }}
     >
-      {/* <DialogTrigger asChild>
-        <CirclePlus />
-      </DialogTrigger> */}
       <DialogContent className="bg-white text-black p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6 relative">
           {formType !== "selection" && (

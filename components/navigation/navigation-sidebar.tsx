@@ -7,10 +7,21 @@ import { ScrollArea } from "../ui/scroll-area";
 import { NavigationItem } from "./navigation-item";
 import { ThemeToggle } from "../theme/theme-toggle";
 import { NavUser } from "./nav-user";
+import { redirect } from "next/navigation";
 
 const NavigationSidebar = async () => {
   const profile = await initialProfile();
-  const servers = await profile.loadServers();
+  if (!profile) {
+    return redirect("/login");
+  }
+  const members = await profile.loadMembers();
+  const servers = await Promise.all(
+    members.map(async (member) => {
+      const server = new Server();
+      await server.load(member.serverId);
+      return server;
+    })
+  );
   return (
     <div
       className="space-y-4 flex flex-col items-center 

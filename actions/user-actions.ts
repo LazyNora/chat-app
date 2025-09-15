@@ -6,27 +6,31 @@ import { getTokens } from "next-firebase-auth-edge";
 import { cookies } from "next/headers";
 
 export async function initialProfile() {
-	const tokens = await getTokens(await cookies(), authConfig);
+  const tokens = await getTokens(await cookies(), authConfig);
 
-	if (!tokens) {
-		throw new Error("User is not authenticated");
-	}
+  if (!tokens) {
+    return null;
+  }
 
-	const profile = await Profile.findOne<Profile>("userId", "==", tokens.decodedToken.uid);
+  const profile = await Profile.findOne<Profile>(
+    "userId",
+    "==",
+    tokens.decodedToken.uid
+  );
 
-	if (profile) {
-		return profile;
-	}
+  if (profile) {
+    return profile;
+  }
 
-	const newProfile = new Profile();
-	newProfile.userId = tokens.decodedToken.uid;
-	newProfile.name = tokens.decodedToken.name || "";
-	newProfile.email = tokens.decodedToken.email || "";
-	newProfile.imageUrl = tokens.decodedToken.picture || "";
-	newProfile.createdAt = new Date().toISOString();
-	newProfile.updatedAt = new Date().toISOString();
+  const newProfile = new Profile();
+  newProfile.userId = tokens.decodedToken.uid;
+  newProfile.name = tokens.decodedToken.name || "";
+  newProfile.email = tokens.decodedToken.email || "";
+  newProfile.imageUrl = tokens.decodedToken.picture || "";
+  newProfile.createdAt = new Date().toISOString();
+  newProfile.updatedAt = new Date().toISOString();
 
-	await newProfile.save(tokens.decodedToken.uid);
+  await newProfile.save(tokens.decodedToken.uid);
 
-	return newProfile;
+  return newProfile;
 }

@@ -1,14 +1,23 @@
+// import { Server } from "@/models/models.server";
+import type { Server as ServerType } from "@/types/type.d.ts";
+
 import { create } from "zustand";
-export type ModalType = "createServer";
+export type ModalType = "createServer" | "invite";
+interface ModalData {
+  server?: ServerType;
+}
 interface ModalStore {
   type: ModalType | null;
+  data: ModalData;
   isOpen: boolean;
-  onOpen: (type: ModalType) => void;
+  onOpen: (type: ModalType, data?: ModalData) => void;
   onClose: () => void;
 }
+
 export const useModal = create<ModalStore>((set) => ({
   type: null,
+  data: {},
   isOpen: false,
-  onOpen: (type: ModalType) => set({ isOpen: true, type }),
-  onClose: () => set({ isOpen: false, type: null }),
+  onOpen: (type: ModalType, data = {}) => set({ type, isOpen: true, data }),
+  onClose: () => set({ type: null, isOpen: false }),
 }));
