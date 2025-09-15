@@ -53,7 +53,7 @@ export class BaseModel {
 	// Save the document with optional custom ID
 	async save(id?: string): Promise<void> {
 		const collectionRef = collection(db, (this.constructor as typeof BaseModel).collectionName);
-		const data = this.toJSON();
+		const data = this.toFirestoreJSON();
 
 		if (id || this.id) {
 			const docId = id || this.id;
@@ -72,7 +72,7 @@ export class BaseModel {
 		const docSnap = await getDoc(docRef);
 
 		if (docSnap.exists()) {
-			this.fromJSON({ id: docSnap.id, ...docSnap.data() });
+			this.fromFirestoreJSON({ id: docSnap.id, ...docSnap.data() });
 		} else {
 			throw new Error("Document not found");
 		}
@@ -87,7 +87,7 @@ export class BaseModel {
 	}
 
 	// Convert model to JSON for Firestore
-	protected toJSON(): DocumentData {
+	protected toFirestoreJSON(): DocumentData {
 		const json: DocumentData = {};
 		for (const [key, value] of Object.entries(this)) {
 			if (
@@ -103,7 +103,7 @@ export class BaseModel {
 	}
 
 	// Load JSON data into model
-	protected fromJSON(data: DocumentData): void {
+	protected fromFirestoreJSON(data: DocumentData): void {
 		Object.assign(this, data);
 	}
 
@@ -192,7 +192,7 @@ export class BaseModel {
 
 		return querySnapshot.docs.map((doc) => {
 			const instance = new this();
-			(instance as any).fromJSON({ id: doc.id, ...doc.data() });
+			(instance as any).fromFirestoreJSON({ id: doc.id, ...doc.data() });
 			return instance;
 		});
 	}
@@ -210,7 +210,7 @@ export class BaseModel {
 		return onSnapshot(collectionRef, (snapshot) => {
 			const models = snapshot.docs.map((doc) => {
 				const instance = new this();
-				instance.fromJSON({ id: doc.id, ...doc.data() });
+				instance.fromFirestoreJSON({ id: doc.id, ...doc.data() });
 				return instance;
 			});
 			callback(models);
@@ -223,7 +223,7 @@ export class BaseModel {
 		const docRef = doc(db, (this.constructor as typeof BaseModel).collectionName, this.id);
 		return onSnapshot(docRef, (snapshot) => {
 			if (snapshot.exists()) {
-				this.fromJSON({ id: snapshot.id, ...snapshot.data() });
+				this.fromFirestoreJSON({ id: snapshot.id, ...snapshot.data() });
 				callback();
 			}
 		});
@@ -262,7 +262,7 @@ class QueryBuilder<T extends BaseModel> {
 
 		return querySnapshot.docs.map((doc) => {
 			const instance = new this.ModelClass();
-			(instance as any).fromJSON({ id: doc.id, ...doc.data() });
+			(instance as any).fromFirestoreJSON({ id: doc.id, ...doc.data() });
 			return instance;
 		});
 	}

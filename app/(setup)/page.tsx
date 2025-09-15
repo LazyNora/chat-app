@@ -7,18 +7,18 @@ import { redirect } from "next/navigation";
 import { getServerIdIncludeCurrentUser } from "@/actions/servers";
 
 export default async function Home() {
-  const tokens = await getTokens(await cookies(), authConfig);
+	const tokens = await getTokens(await cookies(), authConfig);
 
-  if (!tokens) {
-    throw new Error("Cannot get counter of unauthenticated user");
-  }
+	if (!tokens) {
+		throw new Error("Cannot get counter of unauthenticated user");
+	}
 
-  const profile = await initialProfile();
-  const serverId = await getServerIdIncludeCurrentUser(profile.userId);
-  if (profile) {
-    return redirect(`/servers/${serverId}`);
-  }
+	const profile = await initialProfile();
+	const serverId = await getServerIdIncludeCurrentUser(profile.userId);
+	if (profile && serverId !== null) {
+		return redirect(`/servers/${serverId}`);
+	}
 
-  // Show user info for logged in user
-  return <InitialModal />;
+	// Show user info for logged in user
+	return <InitialModal />;
 }
