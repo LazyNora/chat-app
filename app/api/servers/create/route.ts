@@ -1,5 +1,12 @@
 import { authConfig } from "@/config/server-config";
-import { Channel, ChannelType, Member, MemberRole, Profile, Server } from "@/models/models.server";
+import {
+  Channel,
+  ChannelType,
+  Member,
+  MemberRole,
+  Profile,
+  Server,
+} from "@/models/models.server";
 import { getTokens } from "next-firebase-auth-edge";
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
@@ -15,9 +22,11 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { serverName, imageUrl } = body;
-    if (!serverName || !imageUrl || typeof imageUrl !== "string") {
+    console.log(serverName, imageUrl);
+
+    if (!serverName || typeof imageUrl !== "string") {
       return NextResponse.json(
-        { message: "Invalid server name or image URL" },
+        { message: "Invalid server name " },
         { status: 400 }
       );
     }
@@ -38,7 +47,7 @@ export async function POST(request: NextRequest) {
     const server = new Server();
 
     server.name = serverName;
-    server.imageUrl = imageUrl;
+    server.imageUrl = imageUrl || "";
     server.inviteCode = uuidv4();
     server.profileId = profile.userId;
 
@@ -57,11 +66,9 @@ export async function POST(request: NextRequest) {
     menmber.role = MemberRole.ADMIN;
     await menmber.save();
 
-    
     return NextResponse.json(
       {
         message: "Server created successfully",
-        serverId: server.getId(),
       },
       { status: 200 }
     );

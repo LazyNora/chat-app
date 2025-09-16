@@ -37,7 +37,16 @@ export const NavigationItem = ({ id, imageUrl, name }: NavigationItemProps) => {
               "bg-primary/10 text-primary rounded-[16px]"
           )}
         >
-          <Image fill src={imageUrl} alt="Channel" />
+          {!imageUrl ? (
+            <div
+              className="absolute inset-0 flex items-center justify-center
+              bg-zinc-300 dark:bg-zinc-700 text-2xl font-bold text-white"
+            >
+              {name.charAt(0).toUpperCase()}
+            </div>
+          ) : (
+            <Image fill src={imageUrl} alt="Channel" />
+          )}
         </div>
       </button>
     </ActionTooltip>

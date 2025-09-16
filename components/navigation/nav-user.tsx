@@ -30,7 +30,9 @@ export function NavUser({ name, email, avatar }: NavUserProps) {
       <DropdownMenuTrigger asChild>
         <Avatar className="h-12 w-12 rounded-lg">
           <AvatarImage src={avatar} alt={name} />
-          <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+          <AvatarFallback className="rounded-lg">
+            {name.charAt(0).toUpperCase()}
+          </AvatarFallback>
         </Avatar>
         {/* <div className="grid flex-1 text-left text-sm leading-tight">
           <span className="truncate font-medium">{name}</span>

@@ -70,6 +70,6 @@ export const config = {
     "/api/profile",
     "/api/servers/create",
     "/api/servers/uploadthing",
-    "/api/servers/:serverId*/invite",
+    "/api/servers/:serverId*",
   ],
 };

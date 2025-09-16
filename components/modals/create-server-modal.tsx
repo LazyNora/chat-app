@@ -13,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -26,18 +25,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import {
-  ChevronRight,
-  Link,
-  Server,
-  ArrowLeft,
-} from "lucide-react";
+import { ChevronRight, Link, Server, ArrowLeft } from "lucide-react";
 import { FileUpload } from "../file-upload";
 import { useModal } from "@/hooks/use-modal-store";
+import { useOrigin } from "@/hooks/use-origin";
 
 const formSchema = z.object({
   serverName: z.string().min(1, { message: "Server name is required" }),
-  imageUrl: z.string().min(1, { message: "Server image is required" }),
+  imageUrl: z.string().optional(),
 });
 
 const inviteFormSchema = z.object({
@@ -57,6 +52,8 @@ export const CreateServerModal = () => {
   const [formType, setFormType] = useState<"selection" | "create" | "invite">(
     "selection"
   );
+  const origin = useOrigin();
+  const inviteUrl = `${origin}/invite/123-456-abc`;
 
   const router = useRouter();
 
@@ -87,7 +84,7 @@ export const CreateServerModal = () => {
         body: JSON.stringify(values),
       });
       const data = await response.json();
-      if (response.ok && data.serverId) {
+      if (response.ok) {
         toast.success("Server created successfully");
         router.refresh();
         form.reset();
@@ -102,30 +99,15 @@ export const CreateServerModal = () => {
   };
 
   const onInviteSubmit = async (values: z.infer<typeof inviteFormSchema>) => {
-    try {
-      const response = await fetch("/api/servers/join", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ inviteLink: values.inviteLink }),
-      });
+    // Extract invite code from the URL (part after the last '/')
+    const inviteCode = values.inviteLink.split("/").pop();
+    const invitePath = `/invite/${inviteCode}`;
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(data.messages || "Joined server successfully");
-        inviteForm.reset();
-        onClose();
-        router.refresh();
-      } else {
-        toast.error(data.messages || "Error joining server");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong. Please try again.");
-    }
+    onClose();
+    form.reset();
+    redirect(invitePath);
   };
+
   const handleClose = () => {
     onClose();
     setFormType("selection");
@@ -219,7 +201,7 @@ export const CreateServerModal = () => {
                         <FormControl>
                           <FileUpload
                             endpoint="serverImage"
-                            value={field.value}
+                            value={field.value || ""}
                             onChange={field.onChange}
                           />
                         </FormControl>
@@ -279,7 +261,7 @@ export const CreateServerModal = () => {
                         <Input
                           disabled={inviteForm.formState.isSubmitting}
                           className="bg-zinc-300/50 border-0 focus:visible:ring-0 text-black focus-visible:ring-offset-0"
-                          placeholder="https://realtime-chat-thomas.vercel.app/server/abc123"
+                          placeholder={inviteUrl}
                           {...field}
                         />
                       </FormControl>

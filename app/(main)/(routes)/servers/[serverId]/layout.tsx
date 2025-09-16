@@ -1,6 +1,6 @@
 import { initialProfile } from "@/actions/user-actions";
 import { ServerSidebar } from "@/components/server/server-sidebar";
-import { Server } from "@/models/models.client";
+import { Server } from "@/models/models.server";
 import { redirect } from "next/navigation";
 import React from "react";
 interface PageProps {
@@ -23,7 +23,8 @@ const ServerLayout = async ({
   }
   const server = new Server();
   await server.load(serverId);
-  if (!server) {
+
+  if (!server || !server.getId()) {
     return redirect("/");
   }
 

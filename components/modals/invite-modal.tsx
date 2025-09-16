@@ -14,6 +14,7 @@ import { Check, Copy, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useOrigin } from "@/hooks/use-origin";
 import type { Server as ServerType } from "@/types/type.d.ts";
+import { toast } from "sonner";
 
 export const InviteModal = () => {
   const { onOpen, isOpen, onClose, type, data } = useModal();
@@ -49,9 +50,11 @@ export const InviteModal = () => {
 
       if (response.ok) {
         const data = await response.json();
+        toast.success("New invite link generated");
         onOpen("invite", { server: data as ServerType });
       } else {
         const errorData = await response.json();
+        toast.error(`Error: ${errorData.message}`);
         console.error("API Error:", errorData);
       }
     } catch (error) {

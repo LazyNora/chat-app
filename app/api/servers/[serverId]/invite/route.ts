@@ -39,7 +39,6 @@ export async function PATCH(
         { status: 404 }
       );
     }
-    console.log("serverId", serverId);
     const server = new Server();
     await server.load(serverId);
     if (!server) {
