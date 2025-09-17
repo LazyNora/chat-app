@@ -1,5 +1,5 @@
 import { initialProfile } from "@/actions/user-actions";
-import { Member, Server } from "@/models/models.server";
+import { Server } from "@/models/models.server";
 import React from "react";
 import { NavigationAction } from "./navigation-action";
 import { Separator } from "../ui/separator";

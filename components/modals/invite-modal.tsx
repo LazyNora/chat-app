@@ -66,7 +66,7 @@ export const InviteModal = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white text-black p-0 overflow-hidden">
+      <DialogContent className=" p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
             Invite friends
@@ -75,7 +75,7 @@ export const InviteModal = () => {
         <div className="p-6">
           <Label
             className="uppercase text-xs font-bold 
-          text-zinc-500 dark:text-secondary/70"
+          "
           >
             Sever Invite Link
           </Label>
@@ -83,7 +83,7 @@ export const InviteModal = () => {
             <Input
               disabled={isLoading}
               className="bg-zinc-300/50 border-0 focus-visible:ring-0 
-              text-black focus-visible:ring-offset-0"
+              focus-visible:ring-offset-0"
               value={inviteUrl}
               readOnly
             />

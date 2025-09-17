@@ -1,6 +1,6 @@
 "use client";
 
-import { redirect, useParams, useRouter } from "next/navigation";
+import {  useParams, useRouter } from "next/navigation";
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";

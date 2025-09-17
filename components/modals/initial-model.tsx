@@ -37,7 +37,7 @@ import { FileUpload } from "../file-upload";
 
 const formSchema = z.object({
   serverName: z.string().min(1, { message: "Server name is required" }),
-  imageUrl: z.string().min(1, { message: "Server image is required" }),
+  imageUrl: z.string().optional(),
 });
 
 const inviteFormSchema = z.object({
@@ -90,8 +90,7 @@ export const InitialModal = () => {
         body: JSON.stringify(values),
       });
       const data = await response.json();
-      console.log(data);
-      if (response.ok && data.serverId) {
+      if (response.ok) {
         toast.success("Server created successfully");
         router.refresh();
         form.reset();
@@ -144,7 +143,7 @@ export const InitialModal = () => {
         }
       }}
     >
-      <DialogContent className="bg-white text-black p-0 overflow-hidden">
+      <DialogContent className=" p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6 relative">
           {formType !== "selection" && (
             <Button
@@ -176,7 +175,7 @@ export const InitialModal = () => {
         {formType === "selection" && (
           <div className="px-6 pb-6">
             <div
-              className="flex items-center justify-between gap-4 py-4 px-8 hover:bg-gray-100 cursor-pointer rounded-lg mb-2"
+              className="flex items-center justify-between gap-4 py-4 px-8 cursor-pointer rounded-lg mb-2"
               onClick={() => setFormType("create")}
             >
               {/* Left column with avatar/icon */}
@@ -193,7 +192,7 @@ export const InitialModal = () => {
             </div>
 
             <div
-              className="flex items-center justify-between py-4 px-8 hover:bg-gray-100 cursor-pointer rounded-lg"
+              className="flex items-center justify-between py-4 px-8 cursor-pointer rounded-lg"
               onClick={() => setFormType("invite")}
             >
               {/* Left column with avatar/icon */}
@@ -229,7 +228,7 @@ export const InitialModal = () => {
                         <FormControl>
                           <FileUpload
                             endpoint="serverImage"
-                            value={field.value}
+                            value={field.value || ""}
                             onChange={field.onChange}
                           />
                         </FormControl>
@@ -244,13 +243,13 @@ export const InitialModal = () => {
                   name="serverName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="uppercase text-xs font-bold text-zinc-500 dark:text-secondary/70">
+                      <FormLabel className="uppercase text-xs font-bold ">
                         Server name
                       </FormLabel>
                       <FormControl>
                         <Input
                           disabled={isLoading}
-                          className="bg-zinc-300/50 border-0 focus:visible:ring-0 text-black focus-visible:ring-offset-0"
+                          className="bg-zinc-300/50 border-0 focus:visible:ring-0 focus-visible:ring-offset-0"
                           placeholder="Enter server name"
                           {...field}
                         />
@@ -260,7 +259,7 @@ export const InitialModal = () => {
                   )}
                 />
               </div>
-              <DialogFooter className="bg-gray-100 px-6 py-4">
+              <DialogFooter className=" px-6 py-4">
                 <Button type="submit" variant="default" disabled={isLoading}>
                   Create
                 </Button>

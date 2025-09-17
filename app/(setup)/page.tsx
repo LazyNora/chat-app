@@ -9,6 +9,7 @@ export default async function Home() {
     return redirect("/login");
   }
   const serverId = await getServerIdIncludeCurrentUser(profile.userId);
+
   if (profile && serverId !== null) {
     return redirect(`/servers/${serverId}`);
   }
