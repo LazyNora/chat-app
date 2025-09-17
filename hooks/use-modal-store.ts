@@ -2,7 +2,7 @@
 import type { Server as ServerType } from "@/types/type.d.ts";
 
 import { create } from "zustand";
-export type ModalType = "createServer" | "invite" | "editServer" | "deleteServer";
+export type ModalType = "createServer" | "invite" | "editServer" | "members"| "createChannel";
 interface ModalData {
   server?: ServerType;
 }
