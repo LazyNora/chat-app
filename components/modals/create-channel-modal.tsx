@@ -74,8 +74,8 @@ export const CreateChannelModal = () => {
       const data = await response.json();
       if (response.ok) {
         toast.success("Server created successfully");
-        router.refresh();
         form.reset();
+        router.refresh();
         onClose();
       } else {
         toast.error(data.messages || data.message || "Error creating server");

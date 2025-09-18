@@ -1,5 +1,5 @@
 // import { Server } from "@/models/models.server";
-import type { Server as ServerType } from "@/types/type.d.ts";
+import type { Server as ServerType } from "@/types/types";
 
 import { create } from "zustand";
 export type ModalType =
@@ -10,7 +10,7 @@ export type ModalType =
   | "createChannel"
   | "leaveServer"
   | "deleteServer";
-  
+
 interface ModalData {
   server?: ServerType;
 }

@@ -26,7 +26,7 @@ import {
 import { useEffect, useState } from "react";
 import qs from "query-string";
 import { useRouter } from "next/navigation";
-import type { Server as ServerType } from "@/types/type.d.ts";
+import type { Server as ServerType } from "@/types/types";
 import { toast } from "sonner";
 import { ScrollArea } from "../ui/scroll-area";
 import {

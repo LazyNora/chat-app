@@ -26,6 +26,7 @@
 		"axios": "^1.11.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
+		"cmdk": "^1.1.1",
 		"firebase": "^11.0.0",
 		"firebase-admin": "^13.5.0",
 		"livekit-client": "^2.15.6",

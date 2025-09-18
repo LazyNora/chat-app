@@ -1,6 +1,6 @@
 "use client";
 import { MemberRole } from "@/models/models.client";
-import type { Server as ServerType } from "@/types/type.d.ts";
+import type { Server as ServerType } from "@/types/types";
 import React from "react";
 import {
   DropdownMenu,

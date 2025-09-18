@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     await server.save();
 
     const channel = new Channel();
-    channel.name = "General";
+    channel.name = "general";
     channel.type = ChannelType.TEXT;
     channel.serverId = server.getId();
     channel.profileId = profile.getId();

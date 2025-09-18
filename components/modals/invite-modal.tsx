@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Copy, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useOrigin } from "@/hooks/use-origin";
-import type { Server as ServerType } from "@/types/type.d.ts";
+import type { Server as ServerType } from "@/types/types";
 import { toast } from "sonner";
 
 export const InviteModal = () => {

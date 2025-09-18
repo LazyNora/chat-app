@@ -1,6 +1,6 @@
 import { initialProfile } from "@/actions/user-actions";
 import { Profile, Server } from "@/models/models.server";
-import type { Server as ServerType } from "@/types/type.d.ts";
+import type { Server as ServerType } from "@/types/types";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function DELETE(

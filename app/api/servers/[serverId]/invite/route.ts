@@ -1,6 +1,6 @@
 import { getTokens } from "next-firebase-auth-edge";
 import { authConfig } from "@/config/server-config";
-import type { Server as ServerType } from "@/types/type.d.ts";
+import type { Server as ServerType } from "@/types/types";
 
 import { NextRequest, NextResponse } from "next/server";
 import { Profile, Server } from "@/models/models.server";
