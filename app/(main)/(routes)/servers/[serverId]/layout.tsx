@@ -1,5 +1,5 @@
 import { initialProfile } from "@/actions/user-actions";
-import { ServerSidebar } from "@/components/server/server-sidebar";
+import { ServerSidebar } from "@/components/servers/server-sidebar";
 import { Server } from "@/models/models.server";
 import { redirect } from "next/navigation";
 import React from "react";

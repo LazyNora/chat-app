@@ -1,5 +1,5 @@
 // import { Server } from "@/models/models.server";
-import type { Server as ServerType } from "@/types/types";
+import type { Channel, ChannelType, Server as ServerType } from "@/types/types";
 
 import { create } from "zustand";
 export type ModalType =
@@ -9,10 +9,14 @@ export type ModalType =
   | "members"
   | "createChannel"
   | "leaveServer"
-  | "deleteServer";
+  | "deleteServer"
+  | "deleteChannel"
+  | "editChannel";
 
 interface ModalData {
   server?: ServerType;
+  channel?: Channel;
+  channelType?: ChannelType;
 }
 interface ModalStore {
   type: ModalType | null;

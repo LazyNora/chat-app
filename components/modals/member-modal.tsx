@@ -126,7 +126,7 @@ export const MembersModal = () => {
         <ScrollArea className="mt-4 max-h-[420px] px-6">
           {server?.members?.map((member) => (
             <div key={member.id} className="flex items-center gap-x-2 mb-6">
-              <UserAvatar src={member.profile?.imageUrl} />
+              <UserAvatar src={member.profile?.imageUrl} fallBack={member.profile?.name} />
               <div className="flex flex-col gap-y-1">
                 <div className="text-xs font-semibold flex items-center gap-x-1">
                   {member.profile?.name}

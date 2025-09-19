@@ -73,5 +73,6 @@ export const config = {
     "/api/servers/:serverId*",
     "/api/members/:memberId*",
     "/api/channels/create",
+    "/api/channels/:channelId*",
   ],
 };

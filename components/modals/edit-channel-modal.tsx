@@ -44,38 +44,36 @@ const formSchema = z.object({
   type: z.enum(["TEXT", "AUDIO", "VIDEO"]),
 });
 
-export const CreateChannelModal = () => {
+export const EditChannelModal = () => {
   const { isOpen, onClose, type, data } = useModal();
-  const isModalOpen = isOpen && type === "createChannel";
-  const params = useParams();
+  const isModalOpen = isOpen && type === "editChannel";
   const router = useRouter();
-  const { channelType } = data;
+  const { channel, server } = data;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      type: "TEXT",
+      name: channel?.name || "",
+      type: channel?.type || ChannelType.TEXT,
     },
   });
   useEffect(() => {
-    if (channelType) {
-      form.setValue("type", channelType);
-    } else {
-      form.setValue("type", ChannelType.TEXT);
+    if (channel) {
+      form.setValue("name", channel.name);
+      form.setValue("type", channel.type);
     }
-  }, [channelType, form]);
+  }, [channel, form]);
 
   const isLoading = form.formState.isSubmitting;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const url = qs.stringifyUrl({
-        url: "/api/channels/create",
-        query: { serverId: params.serverId },
+        url: `/api/channels/${channel?.id}`,
+        query: { serverId: server?.id },
       });
       const response = await fetch(url, {
-        method: "POST",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
@@ -105,7 +103,7 @@ export const CreateChannelModal = () => {
       <DialogContent className=" p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6 relative">
           <DialogTitle className="text-2xl text-center font-bold">
-            Create Channel
+            Edit Channel
           </DialogTitle>
         </DialogHeader>
 
@@ -172,7 +170,7 @@ export const CreateChannelModal = () => {
             </div>
             <DialogFooter className=" px-6 py-4">
               <Button type="submit" variant="default" disabled={isLoading}>
-                Create
+                Save
               </Button>
             </DialogFooter>
           </form>

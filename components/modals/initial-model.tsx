@@ -56,7 +56,6 @@ export const InitialModal = () => {
   const [formType, setFormType] = useState<"selection" | "create" | "invite">(
     "selection"
   );
-
   const router = useRouter();
 
   useEffect(() => {
@@ -104,28 +103,7 @@ export const InitialModal = () => {
   };
 
   const onInviteSubmit = async (values: z.infer<typeof inviteFormSchema>) => {
-    try {
-      const response = await fetch("/api/servers/join", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ inviteLink: values.inviteLink }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(data.messages || "Joined server successfully");
-        inviteForm.reset();
-        router.refresh();
-      } else {
-        toast.error(data.messages || "Error joining server");
-      }
-    } catch (error) {
-      console.log(error);
-      toast.error("Something went wrong. Please try again.");
-    }
+    router.push(values.inviteLink);
   };
 
   if (!isMounted) {

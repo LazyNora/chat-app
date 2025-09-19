@@ -178,23 +178,25 @@ export const ServerSidebar = async ({ serverId }: { serverId: string }) => {
             ))}
           </div>
         )}
-        <div className="mb-2">
-          <ServerSection
-            sectionType="members"
-            role={role}
-            label="Members"
-            server={server.toPlainObject() as ServerType}
-          />
-          {memberAfterFillter.map((member) => (
-            <ServerMembers
-              key={member.getId()}
-              member={member.toPlainObject() as Member}
+        {!!memberAfterFillter?.length && (
+          <div className="mb-2">
+            <ServerSection
+              sectionType="members"
+              role={role}
+              label="Members"
               server={server.toPlainObject() as ServerType}
             />
-          ))}
-        </div>
-        {/* {!!memberAfterFillter?.length && (
-        )} */}
+            <div className="space-y-[2px]">
+              {memberAfterFillter.map((member) => (
+                <ServerMembers
+                  key={member.getId()}
+                  member={member.toPlainObject() as Member}
+                  server={server.toPlainObject() as ServerType}
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </ScrollArea>
     </div>
   );
