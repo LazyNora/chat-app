@@ -124,8 +124,13 @@ export class BaseModel {
 	): Promise<T | undefined> {
 		if (!foreignId) return undefined;
 		try {
-			const result = await ModelClass.findOne({ id: foreignId });
-			return result ?? undefined;
+			const instance = new ModelClass();
+			const docSnap = await db
+			.collection(ModelClass.collectionName)
+			.doc(foreignId)
+			.get();
+			const result = docSnap.exists ? Object.assign(instance, { id: docSnap.id, ...docSnap.data() }) : undefined;
+			return result;
 		} catch (error) {
 			return undefined;
 		}

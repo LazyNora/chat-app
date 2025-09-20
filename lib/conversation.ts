@@ -147,7 +147,7 @@ const createConversation = async (
   const conversation = new Conversation();
   conversation.memberOneId = memberOne[0].getId();
   conversation.memberTwoId = memberTwo[0].getId();
-  await conversation.save();
+  await conversation.save();  
 
   // Load members and profiles sau khi tạo
   conversation.memberOne = memberOne[0];

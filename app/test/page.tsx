@@ -58,6 +58,8 @@ const Page = async () => {
   console.log("Loaded conversation:", conversation);
   await conversation.loadMemberOne(); // undifined
   await conversation.loadMemberTwo(); // undifined
+  await conversation.memberOne?.loadProfile(); // error
+  await conversation.memberTwo?.loadProfile(); // error
   console.log("Loaded conversation with members:", conversation);
 
   // const memberOne = await Member.query<Member>()
