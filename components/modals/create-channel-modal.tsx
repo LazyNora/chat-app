@@ -72,7 +72,7 @@ export const CreateChannelModal = () => {
     try {
       const url = qs.stringifyUrl({
         url: "/api/channels/create",
-        query: { serverId: params.serverId },
+        query: { serverId: params?.serverId },
       });
       const response = await fetch(url, {
         method: "POST",

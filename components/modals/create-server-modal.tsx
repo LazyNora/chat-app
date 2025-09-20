@@ -99,7 +99,6 @@ export const CreateServerModal = () => {
   };
 
   const onInviteSubmit = async (values: z.infer<typeof inviteFormSchema>) => {
-    // Extract invite code from the URL (part after the last '/')
     const inviteCode = values.inviteLink.split("/").pop();
     const invitePath = `/invite/${inviteCode}`;
 

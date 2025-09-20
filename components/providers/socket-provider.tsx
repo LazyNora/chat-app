@@ -31,11 +31,9 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     );
     socketInstance.on("connect", () => {
       setIsConnected(true);
-      console.log("Socket connected:", socketInstance.id);
     });
     socketInstance.on("disconnect", () => {
       setIsConnected(false);
-      console.log("Socket disconnected");
     });
 
     setSocket(socketInstance);

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getFirestoreDB } from "./firebase";
 import type { WhereFilterOp, Firestore } from "firebase/firestore";
 import {

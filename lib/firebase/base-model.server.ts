@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type { WhereFilterOp } from "firebase-admin/firestore";
 import { getFirestore } from "firebase-admin/firestore";
 import type { DocumentData } from "firebase-admin/firestore";

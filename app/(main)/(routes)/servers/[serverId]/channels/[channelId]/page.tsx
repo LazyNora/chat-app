@@ -1,5 +1,6 @@
 import { initialProfile } from "@/actions/user-actions";
 import ChatHeader from "@/components/chats/chat-header";
+import ChatInput from "@/components/chats/chat-input";
 import { Channel, Member } from "@/models/models.server";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -27,8 +28,15 @@ const Page = async ({ params }: PageProps) => {
     return redirect("/"); // User is not a member of this server
   }
   return (
-    <div className="bg-white dark:bg-[#313338] flex flex-col h-full">
+    <div className="bg-white dark:bg-[#313338] flex flex-col h-screen">
       <ChatHeader name={channel.name} serverId={serverId} type="channel" />
+      <div className="flex-1 overflow-y-auto">Future Messages</div>
+      <ChatInput
+        name={channel.name}
+        apiUrl={`/api/socket/messages`}
+        type="channel"
+        query={{ channelId: channel.getId(), serverId: channel.serverId }}
+      />
     </div>
   );
 };
