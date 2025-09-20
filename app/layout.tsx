@@ -13,6 +13,7 @@ import { extractRouterConfig } from "uploadthing/server";
 import { ourFileRouter } from "./api/uploadthing/core";
 import { ModalProvider } from "@/components/providers/modal-provider";
 import { Toaster } from "@/components/ui/sonner";
+import SocketProvider from "@/components/providers/socket-provider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -50,8 +51,10 @@ export default async function RootLayout({
         >
           <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
           <AuthProvider user={user}>
-            <ModalProvider />
-            {children}
+            <SocketProvider>
+              <ModalProvider />
+              {children}
+            </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
         <Toaster position="top-center" expand={false} richColors closeButton />
