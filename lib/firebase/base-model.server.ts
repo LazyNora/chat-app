@@ -123,19 +123,24 @@ export class BaseModel {
     Object.assign(this, data);
   }
 
-  // Load a relationship model
-  protected async loadRelation<T extends BaseModel>(
-    ModelClass: ModelConstructor<T>,
-    foreignId: string
-  ): Promise<T | undefined> {
-    if (!foreignId) return undefined;
-    try {
-      const result = await ModelClass.findOne({ id: foreignId });
-      return result ?? undefined;
-    } catch (error) {
-      return undefined;
-    }
-  }
+	// Load a relationship model
+	protected async loadRelation<T extends BaseModel>(
+		ModelClass: ModelConstructor<T>,
+		foreignId: string
+	): Promise<T | undefined> {
+		if (!foreignId) return undefined;
+		try {
+			const instance = new ModelClass();
+			const docSnap = await db
+			.collection(ModelClass.collectionName)
+			.doc(foreignId)
+			.get();
+			const result = docSnap.exists ? Object.assign(instance, { id: docSnap.id, ...docSnap.data() }) : undefined;
+			return result;
+		} catch (error) {
+			return undefined;
+		}
+	}
 
   // Load many-to-many or one-to-many relationships
   protected async loadRelatedModels<T extends BaseModel>(
