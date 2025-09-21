@@ -90,7 +90,8 @@ export class BaseModel {
         key !== "id" &&
         typeof value !== "function" &&
         !Array.isArray(value) &&
-        value !== undefined
+        value !== undefined &&
+        !(value instanceof BaseModel) // Skip BaseModel instances
       ) {
         json[key] = value;
       }
@@ -123,24 +124,26 @@ export class BaseModel {
     Object.assign(this, data);
   }
 
-	// Load a relationship model
-	protected async loadRelation<T extends BaseModel>(
-		ModelClass: ModelConstructor<T>,
-		foreignId: string
-	): Promise<T | undefined> {
-		if (!foreignId) return undefined;
-		try {
-			const instance = new ModelClass();
-			const docSnap = await db
-			.collection(ModelClass.collectionName)
-			.doc(foreignId)
-			.get();
-			const result = docSnap.exists ? Object.assign(instance, { id: docSnap.id, ...docSnap.data() }) : undefined;
-			return result;
-		} catch (error) {
-			return undefined;
-		}
-	}
+  // Load a relationship model
+  protected async loadRelation<T extends BaseModel>(
+    ModelClass: ModelConstructor<T>,
+    foreignId: string
+  ): Promise<T | undefined> {
+    if (!foreignId) return undefined;
+    try {
+      const instance = new ModelClass();
+      const docSnap = await db
+        .collection(ModelClass.collectionName)
+        .doc(foreignId)
+        .get();
+      const result = docSnap.exists
+        ? Object.assign(instance, { id: docSnap.id, ...docSnap.data() })
+        : undefined;
+      return result;
+    } catch (error) {
+      return undefined;
+    }
+  }
 
   // Load many-to-many or one-to-many relationships
   protected async loadRelatedModels<T extends BaseModel>(
@@ -289,7 +292,7 @@ class QueryBuilder<T extends BaseModel> {
     this.query = this.query.offset(value);
     return this;
   }
-  
+
   async get(): Promise<T[]> {
     const querySnapshot = await this.query.get();
 

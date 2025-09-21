@@ -34,10 +34,6 @@ const ServerMembers = ({ member, server }: ServerMemberProps) => {
         params?.memberId === member.id && "bg-zinc-700/20 dark:bg-zinc-700"
       )}
     >
-      {/* <Avatar>
-        <AvatarImage src={member.profile?.imageUrl || ""} />
-        <AvatarFallback>{member.profile?.name?.charAt(0)}</AvatarFallback>
-      </Avatar> */}
       <UserAvatar src={member.profile?.imageUrl} fallBack={member.profile?.name} />
       <p
         className={cn(

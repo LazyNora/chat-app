@@ -2,8 +2,10 @@ import { initialProfile } from "@/actions/user-actions";
 import ChatHeader from "@/components/chats/chat-header";
 import ChatInput from "@/components/chats/chat-input";
 import ChatMessages from "@/components/chats/chat-messages";
+import ChatWelcome from "@/components/chats/chat-welcome";
 import { Channel, Member } from "@/models/models.server";
 import type { Member as MemberType } from "@/types/types";
+import { Loader2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import React from "react";
 interface PageProps {
@@ -32,7 +34,9 @@ const Page = async ({ params }: PageProps) => {
   return (
     <div className="bg-white dark:bg-[#313338] flex flex-col h-screen">
       <ChatHeader name={channel.name} serverId={serverId} type="channel" />
-      <div className="flex-1 overflow-y-auto self-center">
+      <ChatWelcome name={channel.name} type="channel" />
+      <div className="flex-1 overflow-y-auto ">
+
         <ChatMessages
           member={member[0].toPlainObject() as MemberType}
           name={channel.name}
