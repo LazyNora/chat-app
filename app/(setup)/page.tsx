@@ -1,5 +1,5 @@
 import { initialProfile } from "@/actions/user-actions";
-import { InitialModal } from "@/components/modals/initial-model";
+import { InitialModal } from "@/components/modals/initial-modal";
 import { redirect } from "next/navigation";
 import { getServerIdIncludeCurrentUser } from "@/actions/servers";
 

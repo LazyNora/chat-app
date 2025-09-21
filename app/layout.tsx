@@ -14,6 +14,7 @@ import { ourFileRouter } from "./api/uploadthing/core";
 import { ModalProvider } from "@/components/providers/modal-provider";
 import { Toaster } from "@/components/ui/sonner";
 import SocketProvider from "@/components/providers/socket-provider";
+import QueryProvider from "@/components/providers/query-provider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -53,7 +54,7 @@ export default async function RootLayout({
           <AuthProvider user={user}>
             <SocketProvider>
               <ModalProvider />
-              {children}
+              <QueryProvider>{children}</QueryProvider>
             </SocketProvider>
           </AuthProvider>
         </ThemeProvider>
