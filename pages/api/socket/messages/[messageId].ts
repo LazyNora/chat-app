@@ -19,7 +19,7 @@ export default async function handler(
     const { content } = req.body;
     const { channelId, serverId, messageId } = req.query;
 
-    if (!content || (!channelId && !serverId && !messageId)) {
+    if (!channelId && !serverId && !messageId) {
       return res.status(400).json({ message: "Bad request" });
     }
 
@@ -60,19 +60,27 @@ export default async function handler(
     if (!canModify) {
       return res.status(401).json({ message: "Unauthorized" });
     }
+    const updatedAt = new Date().toISOString();
 
     if (req.method === "DELETE") {
-      message.fileUrl = "null"; // đợi delete part
+      if (message.fileUrl && message.fileUrl !== "null") {
+        message.fileUrl = "null"; // đợi delete part
+      }
       message.deleted = true;
       message.content = "This message has been deleted";
+      message.updatedAt = updatedAt;
       await message.save();
     }
 
     if (req.method === "PATCH") {
+      if (!content) {
+        return res.status(400).json({ message: "Content is required" });
+      }
       if (!isMessageOwner) {
         return res.status(401).json({ message: "Unauthorized" });
       }
       message.content = content;
+      message.updatedAt = updatedAt;
       await message.save();
     }
 

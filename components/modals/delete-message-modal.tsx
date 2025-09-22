@@ -12,22 +12,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import qs from "query-string";
-export const DeleteChannelModal = () => {
+export const DeleteMessageModal = () => {
   const { isOpen, onClose, type, data } = useModal();
-  const router = useRouter();
-  const { server, channel } = data;
+  const { apiUrl, query } = data;
 
   const [isLoading, setLoading] = useState(false);
 
-  const isModalOpen = isOpen && type === "deleteChannel";
+  const isModalOpen = isOpen && type === "deleteMessage";
 
   const onConfirm = async () => {
     try {
       const url = qs.stringifyUrl({
-        url: `/api/channels/${channel?.id}`,
-        query: { serverId: server?.id },
+        url: apiUrl || "",
+        query,
       });
       setLoading(true);
       const response = await fetch(url, {
@@ -36,7 +34,6 @@ export const DeleteChannelModal = () => {
       const data = await response.json();
       if (response.ok) {
         toast.success(data.message);
-        router.refresh();
         onClose();
       } else {
         toast.error(data.message || "Something went wrong");
@@ -52,14 +49,11 @@ export const DeleteChannelModal = () => {
       <DialogContent className=" p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
-            Delete Channel
+            Delete Message
           </DialogTitle>
           <DialogDescription className="text-center mt-4 text-sm">
-            Are you sure you want to delete{" "}
-            <strong className="font-semibold text-indigo-500">
-              #{channel?.name}
-            </strong>
-            ? This action cannot be undone.
+            Are you sure you want to delete this message? <br />
+            This action cannot be undone.
           </DialogDescription>
         </DialogHeader>
 

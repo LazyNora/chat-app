@@ -10,10 +10,19 @@ import qs from "query-string";
 import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormMessage } from "../ui/form";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "../ui/form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { toast } from "sonner";
+import { useModal } from "@/hooks/use-modal-store";
+import { useParams, useRouter } from "next/navigation";
 interface ChatItemProps {
   id: string;
   content: string;
@@ -48,8 +57,8 @@ const ChatItem = ({
   socketQuery,
 }: ChatItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
+  const { onOpen } = useModal();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -74,16 +83,32 @@ const ChatItem = ({
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [form]);
 
   const fileType = fileUrl?.split(".").pop();
   const isAdmin = currentMember.role === MemberRole.ADMIN;
   const isModerator = currentMember.role === MemberRole.MODERATOR;
   const isOwner = currentMember.profileId === member.profileId;
   const canDeleteMessage = !deleted && (isAdmin || isOwner || isModerator);
-  const canEditMessage = !deleted && isOwner && !fileUrl;
-  const isPDF = fileType === "pdf" && fileUrl;
-  const isImage = !isPDF && fileUrl;
+
+  // Kiểm tra fileUrl có hợp lệ không
+  const hasValidFileUrl =
+    fileUrl &&
+    fileUrl !== "null" &&
+    fileUrl !== "undefined" &&
+    fileUrl.trim() !== "";
+  const canEditMessage = !deleted && isOwner && !hasValidFileUrl;
+  const isPDF = hasValidFileUrl && fileType === "pdf";
+  const isImage = hasValidFileUrl && !isPDF;
+  const params = useParams();
+  const router = useRouter();
+
+  const onMemberClick = async (userId: string) => {
+    if (userId === currentMember.profileId) {
+      return;
+    }
+    router.push(`/servers/${params?.serverId}/conversations/${userId}`);
+  };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -112,9 +137,12 @@ const ChatItem = ({
     }
   };
   return (
-    <div className="relative group flex items-center hover:bg-black/5 p-4 transition w-full">
-      <div className="group flex gap-x-2 items-center w-full ">
-        <div className="cursor-pointer hover:drop-shadow-md transition">
+    <div className="relative group flex items-center p-4 transition w-full">
+      <div className="group flex gap-x-2 items-center w-full rounded-md hover:bg-black/5 p-2">
+        <div
+          className="cursor-pointer hover:drop-shadow-md transition"
+          onClick={() => onMemberClick(member.profile?.id || "")}
+        >
           <UserAvatar
             src={member.profile?.imageUrl}
             fallBack={member.profile?.name}
@@ -123,7 +151,10 @@ const ChatItem = ({
         <div className="flex flex-col w-full">
           <div className="flex items-center gap-x-2">
             <div className="flex items-center">
-              <p className="font-semibold text-sm hover:underline cursor-pointer">
+              <p
+                className="font-semibold text-sm hover:underline cursor-pointer"
+                onClick={() => onMemberClick(member.profile?.id || "")}
+              >
                 {member.profile?.name}
               </p>
               <ActionTooltip label={member.role} align="start">
@@ -134,6 +165,7 @@ const ChatItem = ({
               {timestamp}
             </span>
           </div>
+          {/* Hiển thị image nếu có fileUrl hợp lệ và không phải PDF */}
           {isImage && (
             <a
               href={fileUrl}
@@ -149,9 +181,10 @@ const ChatItem = ({
               />
             </a>
           )}
+
+          {/* Hiển thị PDF nếu có fileUrl hợp lệ và là PDF */}
           {isPDF && (
             <div className="relative flex items-center p-2 mt-2 rounded-md bg-background/10">
-              {/* <Image fill src={value} alt="Upload" className="rounded-full" /> */}
               <FileIcon className="h-8 w-8 fill-indigo-200 stroke-indigo-400" />
               <a
                 href={fileUrl}
@@ -163,7 +196,9 @@ const ChatItem = ({
               </a>
             </div>
           )}
-          {!fileUrl && !isEditing && (
+
+          {/* Hiển thị content text nếu không có fileUrl hợp lệ và không đang edit */}
+          {!hasValidFileUrl && !isEditing && (
             <p
               className={cn(
                 "text-sm text-zinc-600 dark:text-zinc-300",
@@ -178,7 +213,9 @@ const ChatItem = ({
               )}
             </p>
           )}
-          {!fileUrl && isEditing && (
+
+          {/* Hiển thị form edit nếu đang edit và không có fileUrl */}
+          {!hasValidFileUrl && isEditing && (
             <Form {...form}>
               <form
                 className="flex items-center w-full gap-x-2 pt-2"
@@ -231,7 +268,15 @@ const ChatItem = ({
             </ActionTooltip>
           )}
           <ActionTooltip label="Delete" align="center">
-            <Trash className="cursor-pointer h-4 w-4 ml-auto text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition" />
+            <Trash
+              onClick={() =>
+                onOpen("deleteMessage", {
+                  apiUrl: `${socketUrl}/${id}`,
+                  query: socketQuery,
+                })
+              }
+              className="cursor-pointer h-4 w-4 ml-auto text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition"
+            />
           </ActionTooltip>
         </div>
       )}

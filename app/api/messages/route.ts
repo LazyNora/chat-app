@@ -18,7 +18,6 @@ export async function GET(request: Request) {
       ? withCursor(parseInt(cursor), channelId)
       : withoutCursor(channelId))();
 
-    messages.reverse(); // Oldest first
     let nextCursor = null;
     if (messages.length === MESSAGES_BATCH) {
       nextCursor = messages[messages.length - 1];
@@ -34,7 +33,7 @@ export async function GET(request: Request) {
     return async () => {
       const messages = await Message.query<Message>()
         .where("channelId", "==", channelId)
-        // .orderBy("createdAt", "desc")
+        .orderBy("createdAt", "desc")
         .limit(MESSAGES_BATCH)
         .offset(cursor)
         .get();
@@ -48,7 +47,7 @@ export async function GET(request: Request) {
     return async () => {
       const messages = await Message.query<Message>()
         .where("channelId", "==", channelId)
-        // .orderBy("createdAt", "desc")
+        .orderBy("createdAt", "desc")
         .limit(MESSAGES_BATCH)
         .get();
       await Promise.all(

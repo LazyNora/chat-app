@@ -35,7 +35,6 @@ const ChatInput = ({ apiUrl, query, name, type }: ChatInputProps) => {
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
     try {
-      console.log(data);
       const url = qs.stringifyUrl({
         url: apiUrl,
         query,

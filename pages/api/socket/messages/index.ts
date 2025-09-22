@@ -40,12 +40,15 @@ export default async function handler(
     if (!channel || channel.serverId !== server.getId()) {
       return res.status(404).json({ message: "Channel not found" });
     }
+    const createdAt = new Date().toISOString();
 
     const message = new Message();
     message.content = content;
     message.fileUrl = fileUrl;
     message.channelId = channel.getId();
     message.memberId = isMember.getId();
+    message.createdAt = createdAt;
+    message.updatedAt = createdAt;
 
     await message.save();
     await message.loadMember();
