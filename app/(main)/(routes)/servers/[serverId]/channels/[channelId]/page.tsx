@@ -3,8 +3,9 @@ import ChatHeader from "@/components/chats/chat-header";
 import ChatInput from "@/components/chats/chat-input";
 import ChatMessages from "@/components/chats/chat-messages";
 import ChatWelcome from "@/components/chats/chat-welcome";
+// import MediaRoom from "@/components/media-room";
 import { Channel, Member } from "@/models/models.server";
-import type { Member as MemberType } from "@/types/types";
+import { ChannelType, type Member as MemberType } from "@/types/types";
 import { Loader2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -35,29 +36,36 @@ const Page = async ({ params }: PageProps) => {
     <div className="bg-white dark:bg-[#313338] flex flex-col h-screen">
       <ChatHeader name={channel.name} serverId={serverId} type="channel" />
       <ChatWelcome name={channel.name} type="channel" />
-      <div className="flex-1 overflow-y-auto ">
-
-        <ChatMessages
-          member={member[0].toPlainObject() as MemberType}
-          name={channel.name}
-          chatId={channelId}
-          type="channel"
-          apiUrl={"/api/messages"}
-          socketUrl={"/api/socket/messages"}
-          socketQuery={{
-            channelId: channel.getId(),
-            serverId: channel.serverId,
-          }}
-          paramKey="channelId"
-          paramValue={channel.getId()}
-        />
-      </div>
-      <ChatInput
-        name={channel.name}
-        apiUrl={`/api/socket/messages`}
-        type="channel"
-        query={{ channelId: channel.getId(), serverId: channel.serverId }}
-      />
+      {channel.type === ChannelType.TEXT && (
+        <div>
+          <div className="flex-1 overflow-y-auto ">
+            <ChatMessages
+              member={member[0].toPlainObject() as MemberType}
+              name={channel.name}
+              chatId={channelId}
+              type="channel"
+              apiUrl={"/api/messages"}
+              socketUrl={"/api/socket/messages"}
+              socketQuery={{
+                channelId: channel.getId(),
+                serverId: channel.serverId,
+              }}
+              paramKey="channelId"
+              paramValue={channel.getId()}
+            />
+          </div>
+          <ChatInput
+            name={channel.name}
+            apiUrl={`/api/socket/messages`}
+            type="channel"
+            query={{ channelId: channel.getId(), serverId: channel.serverId }}
+          />
+        </div>
+      )}
+      {channel.type === ChannelType.AUDIO && (
+        // <MediaRoom chatId={channelId} video={false} audio={true} />
+        "fadfsadfs"
+      )}
     </div>
   );
 };

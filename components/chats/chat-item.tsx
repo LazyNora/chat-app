@@ -126,6 +126,7 @@ const ChatItem = ({
       const data = await request.json();
       if (request.ok) {
         toast.success(data.message);
+        router.refresh();
       } else {
         toast.error(data.message);
       }

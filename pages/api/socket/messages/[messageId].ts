@@ -85,7 +85,7 @@ export default async function handler(
     }
 
     const updateKey = `chat:${channelId}:messages:update`;
-    res?.socket.server.io.emit(updateKey, { action: "update", message });
+    res?.socket.server.io.emit(updateKey, message);
     return res.status(200).json({ message: "Message update", data: message });
   } catch (error) {
     console.error("Error handling message:", error);

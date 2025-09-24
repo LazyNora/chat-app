@@ -77,5 +77,6 @@ export const config = {
     "/api/socket/:path*",
     "/api/messages",
     "/api/messages/:path*",
+    "/api/direct-messages/:path*",
   ],
 };

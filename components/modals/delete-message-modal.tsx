@@ -13,12 +13,13 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
 import qs from "query-string";
+import { useRouter } from "next/navigation";
 export const DeleteMessageModal = () => {
   const { isOpen, onClose, type, data } = useModal();
   const { apiUrl, query } = data;
 
   const [isLoading, setLoading] = useState(false);
-
+  const router = useRouter();
   const isModalOpen = isOpen && type === "deleteMessage";
 
   const onConfirm = async () => {
@@ -34,6 +35,7 @@ export const DeleteMessageModal = () => {
       const data = await response.json();
       if (response.ok) {
         toast.success(data.message);
+        router.refresh();
         onClose();
       } else {
         toast.error(data.message || "Something went wrong");

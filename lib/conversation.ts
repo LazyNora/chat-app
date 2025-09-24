@@ -11,7 +11,6 @@ export const getOrCreateConversation = async (
     memberTwoId,
     serverId
   );
-  console.log("getOrCreateConversation:", conversation);
 
   if (!conversation) {
     // Nếu không tìm thấy, tạo cuộc trò chuyện mới
@@ -33,7 +32,6 @@ const findConversationWithMembers = async (
       memberTwoId,
       serverId
     );
-    console.log("Initial conversationId:", conversationId);
 
     if (!conversationId) {
       conversationId = await findConversation(
@@ -41,14 +39,12 @@ const findConversationWithMembers = async (
         memberOneId,
         serverId
       );
-      console.log("Swapped conversationId:", conversationId);
     }
 
     if (!conversationId) {
       return null;
     }
 
-    console.log("Found conversation:", conversationId);
 
     const memberOne = await Member.query<Member>()
       .where("profileId", "==", memberOneId)
@@ -82,10 +78,6 @@ const findConversationWithMembers = async (
     conversation.memberTwo.profile = profileMemberTwo || undefined;
 
 
-    console.log(
-      "conversation after loading members and profiles:",
-      conversation
-    );
 
     return conversation;
   } catch (error) {
@@ -116,8 +108,6 @@ const findConversation = async (
       .where("memberOneId", "==", memberOne[0].getId())
       .where("memberTwoId", "==", memberTwo[0].getId())
       .get();
-
-    console.log("Query conversation result:", queryConversation);
 
     if (!queryConversation || queryConversation.length === 0) {
       return null;
