@@ -41,9 +41,9 @@ export default async function handler(
     await conversation.memberTwo?.loadProfile();
 
     const member =
-      conversation.memberOne?.getId() === profile.getId()
-        ? conversation.memberTwo
-        : conversation.memberOne;
+      conversation.memberOne?.profileId === profile.getId()
+        ? conversation.memberOne
+        : conversation.memberTwo;
 
     if (!member) {
       return res.status(403).json({ message: "Forbidden" });

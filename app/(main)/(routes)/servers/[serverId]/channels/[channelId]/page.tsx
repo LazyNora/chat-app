@@ -2,12 +2,9 @@ import { initialProfile } from "@/actions/user-actions";
 import ChatHeader from "@/components/chats/chat-header";
 import ChatInput from "@/components/chats/chat-input";
 import ChatMessages from "@/components/chats/chat-messages";
-import ChatWelcome from "@/components/chats/chat-welcome";
-import MediaRoom from "@/components/media-room-new";
-// import MediaRoom from "@/components/media-room";
+import MediaRoom from "@/components/media-room";
 import { Channel, Member } from "@/models/models.server";
 import { ChannelType, type Member as MemberType } from "@/types/types";
-import { Loader2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import React from "react";
 interface PageProps {
@@ -63,9 +60,9 @@ const Page = async ({ params }: PageProps) => {
           />
         </div>
       )}
-      {channel.type === ChannelType.AUDIO &&
-        // <MediaRoom chatId={channelId} video={false} audio={true} />
-        "fadfsadfs"}
+      {channel.type === ChannelType.AUDIO && (
+        <MediaRoom chatId={channelId} video={false} audio={true} />
+      )}
     </div>
   );
 };

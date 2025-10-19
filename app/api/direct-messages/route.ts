@@ -16,7 +16,6 @@ export async function GET(request: Request) {
         status: 400,
       });
     }
-
     const conversation = new Conversation();
     await conversation.load(conversationId);
 
@@ -32,6 +31,7 @@ export async function GET(request: Request) {
 
     // Load member and profile for each direct message
     const messages = conversation.directMessages || [];
+
     await Promise.all(
       messages.map(async (message) => {
         await message.loadMember();
@@ -39,11 +39,15 @@ export async function GET(request: Request) {
       })
     );
 
-    return NextResponse.json({ items: messages }, { status: 200 });
+    const messagesSorted = messages.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+
+    return NextResponse.json({ items: messagesSorted }, { status: 200 });
   } catch (error) {
     console.error("Error fetching messages:", error);
     return NextResponse.json("Failed to fetch messages", { status: 500 });
   }
-
- 
 }

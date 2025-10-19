@@ -57,10 +57,6 @@ const ChatMessages = ({
     shouldLoadMore: !isFetchingNextPage && !!hasNextPage,
     count: data?.pages?.[0]?.items?.length ?? 0,
   });
-  
-  useEffect(() => {
-    console.log("data", data);
-  }, [data]);
 
   if (status === "pending") {
     return (
