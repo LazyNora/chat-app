@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import React from "react";
 import { useForm } from "react-hook-form";
 import qs from "query-string";
+import { useQueryClient } from "@tanstack/react-query";
 
 import z from "zod";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
@@ -18,12 +19,14 @@ interface ChatInputProps {
   query: Record<string, any>;
   name: string;
   type: "conversation" | "channel";
+  chatId?: string; // Thêm chatId để invalidate query
 }
 const formSchema = z.object({
   content: z.string().min(1).max(2000),
 });
-const ChatInput = ({ apiUrl, query, name, type }: ChatInputProps) => {
+const ChatInput = ({ apiUrl, query, name, type, chatId }: ChatInputProps) => {
   const { onOpen } = useModal();
+  const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -50,6 +53,14 @@ const ChatInput = ({ apiUrl, query, name, type }: ChatInputProps) => {
 
       if (res.ok) {
         form.reset();
+
+        // Invalidate query để refetch messages ngay lập tức
+        if (chatId) {
+          await queryClient.invalidateQueries({
+            queryKey: [`chat:${chatId}`],
+          });
+        }
+
         router.refresh();
       } else {
         toast.error("Failed to send message");

@@ -3,7 +3,7 @@ import React from "react";
 import { UserAvatar } from "../user-avatar";
 import { ActionTooltip } from "../action-tooltip";
 import Image from "next/image";
-import { Edit, FileIcon, Trash } from "lucide-react";
+import { Edit, FileIcon, ShieldAlert, ShieldCheck, Trash } from "lucide-react";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import qs from "query-string";
@@ -36,9 +36,9 @@ interface ChatItemProps {
   socketQuery: Record<string, string>;
 }
 const roleIconMap = {
-  [MemberRole.GUEST]: "👤",
-  [MemberRole.ADMIN]: "👑",
-  [MemberRole.MODERATOR]: "🛡️",
+  [MemberRole.GUEST]: null,
+  [MemberRole.ADMIN]: <ShieldCheck className="w-4 h-4 text-indigo-500" />,
+  [MemberRole.MODERATOR]: <ShieldAlert className="w-4 h-4 text-rose-500" />,
 };
 const formSchema = z.object({
   content: z.string().min(1).max(500),

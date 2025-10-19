@@ -5,7 +5,7 @@ import { Channel, ChannelType, MemberRole, Server } from "@/types/types";
 import { useParams, useRouter } from "next/navigation";
 import React from "react";
 import { ActionTooltip } from "../action-tooltip";
-import { Edit, Lock, Trash } from "lucide-react";
+import { Edit, Hash, Lock, Mic, Trash, Video } from "lucide-react";
 
 interface ServerChannelProps {
   channel: Channel;
@@ -14,11 +14,10 @@ interface ServerChannelProps {
 }
 
 const iconMap = {
-  [ChannelType.TEXT]: "📄",
-  [ChannelType.AUDIO]: "🔊",
-  [ChannelType.VIDEO]: "📹",
+  [ChannelType.TEXT]: <Hash className="w-4 h-4" />,
+  [ChannelType.AUDIO]: <Mic className="w-4 h-4" />,
+  [ChannelType.VIDEO]: <Video className="w-4 h-4" />,
 };
-
 const ServerChannel = ({ channel, server, role }: ServerChannelProps) => {
   const { onOpen } = useModal();
   const params = useParams();

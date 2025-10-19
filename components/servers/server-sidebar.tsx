@@ -12,15 +12,16 @@ import { Separator } from "@/components/ui/separator";
 import ServerSection from "./server-section";
 import ServerChannel from "./server-channel";
 import ServerMembers from "./server-members";
+import { Hash, Mic, ShieldAlert, ShieldCheck, Video } from "lucide-react";
 const iconMap = {
-  [ChannelType.TEXT]: "📄",
-  [ChannelType.AUDIO]: "🔊",
-  [ChannelType.VIDEO]: "📹",
+  [ChannelType.TEXT]: <Hash className="w-4 h-4" />,
+  [ChannelType.AUDIO]: <Mic className="w-4 h-4" />,
+  [ChannelType.VIDEO]: <Video className="w-4 h-4" />,
 };
 const roleIconMap = {
-  [MemberRole.GUEST]: "👤",
-  [MemberRole.ADMIN]: "👑",
-  [MemberRole.MODERATOR]: "🛡️",
+  [MemberRole.GUEST]: null,
+  [MemberRole.ADMIN]: <ShieldCheck className="w-4 h-4 text-indigo-500" />,
+  [MemberRole.MODERATOR]: <ShieldAlert className="w-4 h-4 text-rose-500" />,
 };
 
 export const ServerSidebar = async ({ serverId }: { serverId: string }) => {

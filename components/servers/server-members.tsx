@@ -5,6 +5,7 @@ import React from "react";
 import { UserAvatar } from "../user-avatar";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 
 interface ServerMemberProps {
   member: Member;
@@ -12,9 +13,9 @@ interface ServerMemberProps {
 }
 
 const roleIconMap = {
-  [MemberRole.GUEST]: "👤",
-  [MemberRole.ADMIN]: "👑",
-  [MemberRole.MODERATOR]: "🛡️",
+  [MemberRole.GUEST]: null,
+  [MemberRole.ADMIN]: <ShieldCheck className="w-4 h-4 text-indigo-500" />,
+  [MemberRole.MODERATOR]: <ShieldAlert className="w-4 h-4 text-rose-500" />,
 };
 
 const ServerMembers = ({ member, server }: ServerMemberProps) => {
@@ -34,7 +35,10 @@ const ServerMembers = ({ member, server }: ServerMemberProps) => {
         params?.memberId === member.id && "bg-zinc-700/20 dark:bg-zinc-700"
       )}
     >
-      <UserAvatar src={member.profile?.imageUrl} fallBack={member.profile?.name} />
+      <UserAvatar
+        src={member.profile?.imageUrl}
+        fallBack={member.profile?.name}
+      />
       <p
         className={cn(
           "font-semibold text-sm text-zinc-500 group-hover:text-zinc-600 dark:text-zinc-400 dark:group-hover:text-zinc-300 transition",

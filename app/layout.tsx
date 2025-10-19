@@ -16,46 +16,49 @@ import { Toaster } from "@/components/ui/sonner";
 import SocketProvider from "@/components/providers/socket-provider";
 import QueryProvider from "@/components/providers/query-provider";
 const geistSans = Geist({
-	variable: "--font-geist-sans",
-	subsets: ["latin"],
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
 });
 
 const geistMono = Geist_Mono({
-	variable: "--font-geist-mono",
-	subsets: ["latin"],
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-	title: "Chat App",
-	description: "Chat application built with Next.js and Firebase",
+  title: "Chat App",
+  description: "Chat application built with Next.js and Firebase",
 };
 
 export default async function RootLayout({
-	children,
+  children,
 }: Readonly<{
-	children: React.ReactNode;
+  children: React.ReactNode;
 }>) {
-	const tokens = await getTokens<UserMetadata>(await cookies(), authConfig);
-	const user = tokens ? toUser(tokens) : null;
+  const tokens = await getTokens<UserMetadata>(await cookies(), authConfig);
+  const user = tokens ? toUser(tokens) : null;
 
-	return (
-		<html lang="en" suppressHydrationWarning>
-			<body className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					enableSystem
-					disableTransitionOnChange>
-					<NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
-					<AuthProvider user={user}>
-						<SocketProvider>
-							<ModalProvider />
-							<QueryProvider>{children}</QueryProvider>
-						</SocketProvider>
-					</AuthProvider>
-				</ThemeProvider>
-				<Toaster position="top-center" expand={false} richColors closeButton />
-			</body>
-		</html>
-	);
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <NextSSRPlugin routerConfig={extractRouterConfig(ourFileRouter)} />
+          <AuthProvider user={user}>
+            <SocketProvider>
+              <ModalProvider />
+              <QueryProvider>{children}</QueryProvider>
+            </SocketProvider>
+          </AuthProvider>
+        </ThemeProvider>
+        <Toaster position="top-center" expand={false} richColors />
+      </body>
+    </html>
+  );
 }

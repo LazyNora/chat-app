@@ -115,7 +115,7 @@ export const CreateServerModal = () => {
   };
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-white text-black p-0 overflow-hidden">
+      <DialogContent className="  p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6 relative">
           {formType !== "selection" && (
             <Button
@@ -147,7 +147,7 @@ export const CreateServerModal = () => {
         {formType === "selection" && (
           <div className="px-6 pb-6">
             <div
-              className="flex items-center justify-between gap-4 py-4 px-8 hover:bg-gray-100 cursor-pointer rounded-lg mb-2"
+              className="flex items-center justify-between gap-4 py-4 px-8 hover:bg-gray-100 hover:dark:bg-gray-700 cursor-pointer rounded-lg mb-2"
               onClick={() => setFormType("create")}
             >
               {/* Left column with avatar/icon */}
@@ -164,7 +164,7 @@ export const CreateServerModal = () => {
             </div>
 
             <div
-              className="flex items-center justify-between py-4 px-8 hover:bg-gray-100 cursor-pointer rounded-lg"
+              className="flex items-center justify-between py-4 px-8 hover:bg-gray-100 hover:dark:bg-gray-700 cursor-pointer rounded-lg"
               onClick={() => setFormType("invite")}
             >
               {/* Left column with avatar/icon */}
@@ -221,7 +221,7 @@ export const CreateServerModal = () => {
                       <FormControl>
                         <Input
                           disabled={isLoading}
-                          className="bg-zinc-300/50 border-0 focus:visible:ring-0 text-black focus-visible:ring-offset-0"
+                          className="bg-zinc-300/50 border-0 focus:visible:ring-0  focus-visible:ring-offset-0"
                           placeholder="Enter server name"
                           {...field}
                         />
@@ -231,7 +231,7 @@ export const CreateServerModal = () => {
                   )}
                 />
               </div>
-              <DialogFooter className="bg-gray-100 px-6 py-4">
+              <DialogFooter className=" px-6 py-4">
                 <Button type="submit" variant="default" disabled={isLoading}>
                   Create
                 </Button>
@@ -259,7 +259,7 @@ export const CreateServerModal = () => {
                       <FormControl>
                         <Input
                           disabled={inviteForm.formState.isSubmitting}
-                          className="bg-zinc-300/50 border-0 focus:visible:ring-0 text-black focus-visible:ring-offset-0"
+                          className="bg-zinc-300/50 border-0 focus:visible:ring-0 focus-visible:ring-offset-0"
                           placeholder={inviteUrl}
                           {...field}
                         />
@@ -269,7 +269,7 @@ export const CreateServerModal = () => {
                   )}
                 />
               </div>
-              <DialogFooter className="bg-gray-100 px-6 py-4">
+              <DialogFooter className="px-6 py-4">
                 <Button
                   type="submit"
                   variant="default"

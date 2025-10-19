@@ -51,16 +51,28 @@ export const useChatSocket = ({
         }
 
         const newData = [...oldData.pages];
+
+        // Kiểm tra xem message đã tồn tại chưa trong TẤT CẢ các pages
+        const messageExists = newData.some((page: any) =>
+          page.items.some((item: Message) => item.id === message.id)
+        );
+
+        if (messageExists) {
+          return oldData; // Không thêm nếu đã tồn tại
+        }
+
         newData[0] = {
           ...newData[0],
           items: [message, ...newData[0].items],
         };
         return { ...oldData, pages: newData };
       });
-      return () => {
-        socket.off(addKey);
-        socket.off(updateKey);
-      };
     });
+
+    // Cleanup function phải ở ngoài, không phải bên trong socket.on(addKey)
+    return () => {
+      socket.off(addKey);
+      socket.off(updateKey);
+    };
   }, [queryClient, addKey, queryKey, socket, updateKey]);
 };
