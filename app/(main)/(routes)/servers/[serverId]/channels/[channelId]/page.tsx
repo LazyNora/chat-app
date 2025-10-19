@@ -31,11 +31,11 @@ const Page = async ({ params }: PageProps) => {
     return redirect("/"); // User is not a member of this server
   }
   return (
-    <div className=" dark:bg-[#313338] flex flex-col h-full">
+    <div className="  flex flex-col h-screen">
       <ChatHeader name={channel.name} serverId={serverId} type="channel" />
       {channel.type === ChannelType.TEXT && (
         <div>
-          <div className="flex-1 overflow-y-auto ">
+          <div className="flex-1 overflow-y-auto">
             <ChatMessages
               member={member[0].toPlainObject() as MemberType}
               name={channel.name}
@@ -62,6 +62,9 @@ const Page = async ({ params }: PageProps) => {
       )}
       {channel.type === ChannelType.AUDIO && (
         <MediaRoom chatId={channelId} video={false} audio={true} />
+      )}
+      {channel.type === ChannelType.VIDEO && (
+        <MediaRoom chatId={channelId} video={true} audio={true} />
       )}
     </div>
   );

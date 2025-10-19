@@ -56,8 +56,8 @@ export default async function RootLayout({
               <QueryProvider>{children}</QueryProvider>
             </SocketProvider>
           </AuthProvider>
+          <Toaster position="top-center" expand={false} richColors />
         </ThemeProvider>
-        <Toaster position="top-center" expand={false} richColors />
       </body>
     </html>
   );
