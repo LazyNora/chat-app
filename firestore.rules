@@ -1,0 +1,173 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isGroupMember(groupId) {
+      return exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+    }
+
+    function hasPermission(groupId, permission) {
+      let member = get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+      return permission in member.data.permissions;
+    }
+
+    function isGroupOwner(groupId) {
+      let group = get(/databases/$(database)/documents/groups/$(groupId));
+      return isAuthenticated() && request.auth.uid == group.data.ownerId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // Groups collection
+    match /groups/{groupId} {
+      allow read: if isAuthenticated() && isGroupMember(groupId);
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && (isGroupOwner(groupId) || hasPermission(groupId, 'manageGroup'));
+      allow delete: if isAuthenticated() && isGroupOwner(groupId);
+
+      // Members subcollection
+      match /members/{memberId} {
+        allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated() &&
+          (isGroupOwner(groupId) || hasPermission(groupId, 'manageRoles'));
+        allow delete: if isAuthenticated() &&
+          (hasPermission(groupId, 'kickMembers') || isOwner(memberId));
+      }
+
+      // Roles subcollection
+      match /roles/{roleId} {
+        allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow write: if isAuthenticated() &&
+          (isGroupOwner(groupId) || hasPermission(groupId, 'manageRoles'));
+      }
+
+      // Channels subcollection
+      match /channels/{channelId} {
+        allow read: if isAuthenticated() &&
+          isGroupMember(groupId) &&
+          hasPermission(groupId, 'viewChannels');
+        allow write: if isAuthenticated() &&
+          (isGroupOwner(groupId) || hasPermission(groupId, 'manageChannels'));
+
+        // Messages subcollection
+        match /messages/{messageId} {
+          allow read: if isAuthenticated() &&
+            isGroupMember(groupId) &&
+            hasPermission(groupId, 'readMessageHistory');
+          allow create: if isAuthenticated() &&
+            isGroupMember(groupId) &&
+            hasPermission(groupId, 'sendMessages') &&
+            request.auth.uid == request.resource.data.senderId;
+          allow update: if isAuthenticated() &&
+            (isOwner(resource.data.senderId) ||
+             hasPermission(groupId, 'manageMessages'));
+          allow delete: if isAuthenticated() &&
+            (isOwner(resource.data.senderId) ||
+             hasPermission(groupId, 'manageMessages'));
+        }
+
+        // Threads subcollection
+        match /threads/{threadId} {
+          allow read: if isAuthenticated() &&
+            isGroupMember(groupId) &&
+            hasPermission(groupId, 'readMessageHistory');
+          allow create: if isAuthenticated() &&
+            isGroupMember(groupId) &&
+            hasPermission(groupId, 'sendMessages');
+          allow update: if isAuthenticated() &&
+            (isOwner(resource.data.creatorId) ||
+             hasPermission(groupId, 'manageMessages'));
+
+          // Thread messages
+          match /messages/{messageId} {
+            allow read: if isAuthenticated() &&
+              isGroupMember(groupId) &&
+              hasPermission(groupId, 'readMessageHistory');
+            allow create: if isAuthenticated() &&
+              isGroupMember(groupId) &&
+              hasPermission(groupId, 'sendMessages');
+            allow update: if isAuthenticated() &&
+              (isOwner(resource.data.senderId) ||
+               hasPermission(groupId, 'manageMessages'));
+            allow delete: if isAuthenticated() &&
+              (isOwner(resource.data.senderId) ||
+               hasPermission(groupId, 'manageMessages'));
+          }
+        }
+      }
+
+      // Invites subcollection
+      match /invites/{inviteCode} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated() && isGroupMember(groupId);
+        allow update: if isAuthenticated();
+        allow delete: if isAuthenticated() &&
+          (isGroupOwner(groupId) || hasPermission(groupId, 'manageGroup'));
+      }
+    }
+
+    // Direct Messages collection
+    match /directMessages/{conversationId} {
+      allow read: if isAuthenticated() &&
+        request.auth.uid in resource.data.participantIds;
+      allow create: if isAuthenticated() &&
+        request.auth.uid in request.resource.data.participantIds;
+      allow update: if isAuthenticated() &&
+        request.auth.uid in resource.data.participantIds;
+
+      // DM Messages subcollection
+      match /messages/{messageId} {
+        function getConversation() {
+          return get(/databases/$(database)/documents/directMessages/$(conversationId));
+        }
+
+        allow read: if isAuthenticated() &&
+          request.auth.uid in getConversation().data.participantIds;
+        allow create: if isAuthenticated() &&
+          request.auth.uid in getConversation().data.participantIds &&
+          request.auth.uid == request.resource.data.senderId;
+        allow update: if isAuthenticated() &&
+          request.auth.uid == resource.data.senderId;
+        allow delete: if isAuthenticated() &&
+          request.auth.uid == resource.data.senderId;
+      }
+    }
+
+    // Friends collection
+    match /friends/{friendshipId} {
+      allow read: if isAuthenticated() &&
+        request.auth.uid in resource.data.userIds;
+      allow create: if isAuthenticated() &&
+        request.auth.uid in request.resource.data.userIds;
+      allow update: if isAuthenticated() &&
+        request.auth.uid in resource.data.userIds;
+      allow delete: if isAuthenticated() &&
+        request.auth.uid in resource.data.userIds;
+    }
+
+    // Message Seen Status collection
+    match /messageSeenStatus/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+
+      match /{document=**} {
+        allow read, write: if isAuthenticated() && isOwner(userId);
+      }
+    }
+  }
+}
+

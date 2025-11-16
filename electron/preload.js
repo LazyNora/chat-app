@@ -1,0 +1,14 @@
+// Preload script for Electron
+// Exposes safe APIs to the renderer process
+
+const { contextBridge } = require('electron');
+
+contextBridge.exposeInMainWorld('electron', {
+  platform: process.platform,
+  versions: {
+    node: process.versions.node,
+    chrome: process.versions.chrome,
+    electron: process.versions.electron
+  }
+});
+
