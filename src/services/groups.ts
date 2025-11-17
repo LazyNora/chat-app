@@ -13,7 +13,7 @@ import {
 	increment,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Group, GroupMember, Role, GroupSettings } from "@/types";
+import type { Group, GroupMember, Role, GroupSettings } from "@/types";
 import {
 	DEFAULT_EVERYONE_PERMISSIONS,
 	ADMIN_PERMISSIONS,

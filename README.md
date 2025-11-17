@@ -61,19 +61,22 @@ A full-featured Discord/Slack clone built with modern web technologies.
 ### Installation
 
 1. Clone the repository
-   \`\`\`bash
+
+   ```bash
    git clone <repository-url>
    cd chat-app-v2
-   \`\`\`
+   ```
 
 2. Install dependencies
-   \`\`\`bash
+
+   ```bash
    npm install
-   \`\`\`
+   ```
 
 3. Set up environment variables
    Create a `.env` file in the root directory:
-   \`\`\`env
+
+   ```env
    VITE_FIREBASE_API_KEY=your_api_key
    VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
    VITE_FIREBASE_PROJECT_ID=your_project_id
@@ -84,12 +87,13 @@ A full-featured Discord/Slack clone built with modern web technologies.
    VITE_PUSHER_CLUSTER=your_pusher_cluster
    VITE_LIVEKIT_URL=your_livekit_url
    VITE_BACKEND_URL=http://localhost:3001
-   \`\`\`
+   ```
 
 4. Start the development server
-   \`\`\`bash
+
+   ```bash
    npm run dev
-   \`\`\`
+   ```
 
 5. Set up and start the backend (see `backend/README.md`)
 
@@ -108,7 +112,7 @@ See `backend/README.md` for backend setup instructions.
 
 ## Project Structure
 
-\`\`\`
+```
 src/
 ├── components/
 │ ├── ui/ # shadcn/ui components
@@ -124,7 +128,7 @@ src/
 ├── lib/ # Utility functions
 ├── types/ # TypeScript type definitions
 └── pages/ # Route pages
-\`\`\`
+```
 
 ## Available Scripts
 
@@ -148,9 +152,9 @@ src/
 
 ### Electron Desktop App
 
-\`\`\`bash
+```bash
 npm run electron:build
-\`\`\`
+```
 
 ## License
 

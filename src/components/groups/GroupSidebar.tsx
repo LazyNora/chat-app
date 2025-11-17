@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import { Plus, Hash, Volume2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Hash, Volume2 } from "lucide-react";
 import { useGroupStore } from "@/stores/groupStore";
 import { useAuthStore } from "@/stores/authStore";
 import { getUserGroups } from "@/services/groups";
 import { useGroupChannels } from "@/hooks/useFirestore";
-import { Channel } from "@/types";
+import type { Channel } from "@/types";
 import { cn } from "@/lib/utils";
 
 export function GroupSidebar() {
@@ -27,7 +26,7 @@ export function GroupSidebar() {
 		if (user) {
 			getUserGroups(user.uid).then(setGroups);
 		}
-	}, [user]);
+	}, [user, setGroups]);
 
 	// Update channels when they change in Firestore
 	useEffect(() => {

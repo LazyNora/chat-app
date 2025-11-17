@@ -1,117 +1,120 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
-  collection,
-  doc,
-  onSnapshot,
-  query,
-  Query,
-  DocumentReference,
-  QueryConstraint,
-  orderBy as firestoreOrderBy,
-} from 'firebase/firestore';
-import { db } from '@/services/firebase';
+	collection,
+	doc,
+	onSnapshot,
+	query,
+	Query,
+	DocumentReference,
+	QueryConstraint,
+	orderBy as firestoreOrderBy,
+} from "firebase/firestore";
+import { db } from "@/services/firebase";
 
 // Hook to listen to a Firestore document
 export function useDocument<T>(
-  path: string | null,
-  id: string | null
+	path: string | null,
+	id: string | null
 ): { data: T | null; loading: boolean; error: Error | null } {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+	const [data, setData] = useState<T | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    if (!path || !id) {
-      setLoading(false);
-      return;
-    }
+	useEffect(() => {
+		if (!path || !id) {
+			setTimeout(() => {
+				setLoading(false);
+			}, 0);
+			return;
+		}
 
-    const docRef = doc(db, path, id);
+		const docRef = doc(db, path, id);
 
-    const unsubscribe = onSnapshot(
-      docRef,
-      (snapshot) => {
-        if (snapshot.exists()) {
-          setData({ id: snapshot.id, ...snapshot.data() } as T);
-        } else {
-          setData(null);
-        }
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        console.error('Error fetching document:', err);
-        setError(err);
-        setLoading(false);
-      }
-    );
+		const unsubscribe = onSnapshot(
+			docRef,
+			(snapshot) => {
+				if (snapshot.exists()) {
+					setData({ id: snapshot.id, ...snapshot.data() } as T);
+				} else {
+					setData(null);
+				}
+				setLoading(false);
+				setError(null);
+			},
+			(err) => {
+				console.error("Error fetching document:", err);
+				setError(err);
+				setLoading(false);
+			}
+		);
 
-    return () => unsubscribe();
-  }, [path, id]);
+		return () => unsubscribe();
+	}, [path, id]);
 
-  return { data, loading, error };
+	return { data, loading, error };
 }
 
 // Hook to listen to a Firestore collection
 export function useCollection<T>(
-  path: string | null,
-  ...constraints: QueryConstraint[]
+	path: string | null,
+	...constraints: QueryConstraint[]
 ): { data: T[]; loading: boolean; error: Error | null } {
-  const [data, setData] = useState<T[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+	const [data, setData] = useState<T[]>([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState<Error | null>(null);
 
-  useEffect(() => {
-    if (!path) {
-      setLoading(false);
-      return;
-    }
+	useEffect(() => {
+		if (!path) {
+			setTimeout(() => {
+				setLoading(false);
+			}, 0);
+			return;
+		}
 
-    const collectionRef = collection(db, path);
-    const q = constraints.length > 0 ? query(collectionRef, ...constraints) : collectionRef;
+		const collectionRef = collection(db, path);
+		const q = constraints.length > 0 ? query(collectionRef, ...constraints) : collectionRef;
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const items = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as T[];
-        setData(items);
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        console.error('Error fetching collection:', err);
-        setError(err);
-        setLoading(false);
-      }
-    );
+		const unsubscribe = onSnapshot(
+			q,
+			(snapshot) => {
+				const items = snapshot.docs.map((doc) => ({
+					id: doc.id,
+					...doc.data(),
+				})) as T[];
+				setData(items);
+				setLoading(false);
+				setError(null);
+			},
+			(err) => {
+				console.error("Error fetching collection:", err);
+				setError(err);
+				setLoading(false);
+			}
+		);
 
-    return () => unsubscribe();
-  }, [path, ...constraints.map((c) => JSON.stringify(c))]);
+		return () => unsubscribe();
+	}, [constraints, path]);
 
-  return { data, loading, error };
+	return { data, loading, error };
 }
 
 // Hook to listen to group channels
 export function useGroupChannels(groupId: string | null) {
-  return useCollection<any>(
-    groupId ? `groups/${groupId}/channels` : null,
-    firestoreOrderBy('position', 'asc')
-  );
+	return useCollection<any>(
+		groupId ? `groups/${groupId}/channels` : null,
+		firestoreOrderBy("position", "asc")
+	);
 }
 
 // Hook to listen to group members
 export function useGroupMembers(groupId: string | null) {
-  return useCollection<any>(groupId ? `groups/${groupId}/members` : null);
+	return useCollection<any>(groupId ? `groups/${groupId}/members` : null);
 }
 
 // Hook to listen to group roles
 export function useGroupRoles(groupId: string | null) {
-  return useCollection<any>(
-    groupId ? `groups/${groupId}/roles` : null,
-    firestoreOrderBy('position', 'desc')
-  );
+	return useCollection<any>(
+		groupId ? `groups/${groupId}/roles` : null,
+		firestoreOrderBy("position", "desc")
+	);
 }
-
