@@ -10,20 +10,6 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == userId;
     }
 
-    function isGroupMember(groupId) {
-      return exists(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-    }
-
-    function hasPermission(groupId, permission) {
-      let member = get(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
-      return permission in member.data.permissions;
-    }
-
-    function isGroupOwner(groupId) {
-      let group = get(/databases/$(database)/documents/groups/$(groupId));
-      return isAuthenticated() && request.auth.uid == group.data.ownerId;
-    }
-
     // Users collection
     match /users/{userId} {
       allow read: if isAuthenticated();
@@ -34,6 +20,30 @@ service cloud.firestore {
 
     // Groups collection
     match /groups/{groupId} {
+      function safeGet(path) {
+        return exists(path) ? get(path) : null;
+      }
+
+      function isGroupMember(groupId) {
+        let member = safeGet(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+        return member != null;
+      }
+
+      function hasPermission(groupId, permission) {
+        let member = safeGet(/databases/$(database)/documents/groups/$(groupId)/members/$(request.auth.uid));
+        return member != null && permission in member.data.permissions;
+      }
+
+      function isGroupOwner(groupId) {
+        let group = safeGet(/databases/$(database)/documents/groups/$(groupId));
+        return group != null && request.auth.uid == group.data.ownerId;
+      }
+
+      function isCreatingGroup() {
+        // parent does not exist yet → initial setup phase
+        return !exists(/databases/$(database)/documents/groups/$(groupId));
+      }
+
       allow read: if isAuthenticated() && isGroupMember(groupId);
       allow create: if isAuthenticated();
       allow update: if isAuthenticated() && (isGroupOwner(groupId) || hasPermission(groupId, 'manageGroup'));
@@ -41,7 +51,9 @@ service cloud.firestore {
 
       // Members subcollection
       match /members/{memberId} {
-        allow read: if isAuthenticated() && isGroupMember(groupId);
+        // Allow users to read their own member document (needed for collection group queries)
+        // Also allow reading if already a group member
+        allow read: if isAuthenticated() && (isOwner(memberId) || isGroupMember(groupId));
         allow create: if isAuthenticated();
         allow update: if isAuthenticated() &&
           (isGroupOwner(groupId) || hasPermission(groupId, 'manageRoles'));
@@ -52,6 +64,7 @@ service cloud.firestore {
       // Roles subcollection
       match /roles/{roleId} {
         allow read: if isAuthenticated() && isGroupMember(groupId);
+        allow create: if isAuthenticated() && isCreatingGroup();
         allow write: if isAuthenticated() &&
           (isGroupOwner(groupId) || hasPermission(groupId, 'manageRoles'));
       }
@@ -61,6 +74,7 @@ service cloud.firestore {
         allow read: if isAuthenticated() &&
           isGroupMember(groupId) &&
           hasPermission(groupId, 'viewChannels');
+        allow create: if isAuthenticated() && isCreatingGroup();
         allow write: if isAuthenticated() &&
           (isGroupOwner(groupId) || hasPermission(groupId, 'manageChannels'));
 

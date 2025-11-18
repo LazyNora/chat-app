@@ -10,6 +10,9 @@ export function GroupList() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const { groups, selectedGroupId, setSelectedGroup } = useGroupStore();
 
+  console.log('groups', groups);
+  console.log('selectedGroupId', selectedGroupId);
+
   return (
     <>
       <div className="w-16 bg-muted flex flex-col items-center gap-2 py-2">

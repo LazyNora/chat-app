@@ -7,8 +7,9 @@ import { MessageInput } from '@/components/chat/MessageInput';
 import { useGroupStore } from '@/stores/groupStore';
 import { Button } from '@/components/ui/button';
 import { signOut } from '@/services/auth';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { LogOut, Settings } from 'lucide-react';
+import { ThemeSwitcher } from '@/components/theme-switcher';
 
 export function Home() {
   const { user } = useAuthStore();
@@ -43,6 +44,7 @@ export function Home() {
             )}
           </div>
           <div className="flex items-center gap-2">
+            <ThemeSwitcher />
             <Button variant="ghost" size="icon">
               <Settings className="h-5 w-5" />
             </Button>

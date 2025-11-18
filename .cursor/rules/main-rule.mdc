@@ -1,0 +1,70 @@
+---
+alwaysApply: true
+---
+
+# Discord Clone Development Rules
+
+## Code Style
+- Use TypeScript with strict mode
+- Use functional components with hooks
+- Use Tailwind CSS for styling
+- Use shadcn/ui components for all UI elements
+- Keep components small and focused (< 200 lines)
+- Extract reusable logic into custom hooks
+
+## Component Structure
+- Place UI components in src/components/ui/
+- Place feature components in appropriate subdirectories
+- Export types alongside components
+- Use proper TypeScript interfaces for props
+
+## State Management
+- Use Zustand for global state
+- Use React hooks for local state
+- Keep stores in src/stores/
+- Use Firebase real-time listeners for live data
+
+## Services & API
+- Keep Firebase operations in src/services/
+- Use async/await for all async operations
+- Handle errors with try-catch
+- Show user feedback with toast notifications
+
+## UI Requirements
+- Add context menus to all relevant items
+- Add tooltips to all icon buttons
+- Add loading states to all async actions
+- Add error states with retry options
+- Use shadcn components: ContextMenu, DropdownMenu, Tooltip, Dialog
+
+## Accessibility
+- Add ARIA labels to buttons without text
+- Ensure keyboard navigation support
+- Add proper focus management in modals
+- Use semantic HTML elements
+
+## Firebase Best Practices
+- Batch writes when updating multiple documents
+- Use security rules to validate data
+- Denormalize data for performance
+- Add indexes for all queries
+- Use serverTimestamp() for timestamps
+
+## File Organization
+- One component per file
+- Co-locate types with components
+- Keep utility functions in src/lib/
+- Keep hooks in src/hooks/
+
+## Testing Considerations
+- Write testable components
+- Avoid tight coupling
+- Mock Firebase in tests
+- Test user interactions
+
+## Performance
+- Use React.memo for expensive components
+- Implement virtualization for long lists
+- Lazy load routes and heavy components
+- Optimize images and assets
+- Debounce search and typing indicators

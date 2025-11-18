@@ -85,25 +85,5 @@
       ]
     }
   ],
-  "fieldOverrides": [
-    {
-      "collectionGroup": "friends",
-      "fieldPath": "userIds",
-      "indexes": [
-        {
-          "queryScope": "COLLECTION",
-          "fields": [
-            {
-              "fieldPath": "userIds",
-              "arrayConfig": "CONTAINS"
-            },
-            {
-              "fieldPath": "status",
-              "order": "ASCENDING"
-            }
-          ]
-        }
-      ]
-    }
-  ]
+  "fieldOverrides": []
 }

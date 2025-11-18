@@ -63,10 +63,12 @@ export function MessageList({ groupId, channelId }: MessageListProps) {
 				</div>
 			) : (
 				messages.map((message, index) => {
+					const prevMessage = messages[index - 1];
 					const showAvatar =
 						index === 0 ||
-						messages[index - 1].senderId !== message.senderId ||
-						message.createdAt.toMillis() - messages[index - 1].createdAt.toMillis() > 300000; // 5 min
+						prevMessage.senderId !== message.senderId ||
+						(message.createdAt && prevMessage.createdAt &&
+							message.createdAt.toMillis() - prevMessage.createdAt.toMillis() > 300000); // 5 min
 
 					return (
 						<MessageItem

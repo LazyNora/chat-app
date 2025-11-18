@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { createGroup } from '@/services/groups';
 import { useAuthStore } from '@/stores/authStore';
 import { useGroupStore } from '@/stores/groupStore';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
 const schema = z.object({

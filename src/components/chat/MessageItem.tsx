@@ -8,7 +8,7 @@ import { formatDistance } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MoreVertical, Edit, Trash, Smile } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface MessageItemProps {
 	message: Message;

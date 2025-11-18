@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
 	collection,
 	doc,
@@ -63,11 +63,16 @@ export function useCollection<T>(
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
 
+	// Serialize constraints to avoid re-triggering effect on every render
+	const constraintsKey = useMemo(
+		() => JSON.stringify(constraints.map((c) => c.type)),
+		[constraints]
+	);
+
 	useEffect(() => {
 		if (!path) {
-			setTimeout(() => {
-				setLoading(false);
-			}, 0);
+			setData([]);
+			setLoading(false);
 			return;
 		}
 
@@ -93,16 +98,18 @@ export function useCollection<T>(
 		);
 
 		return () => unsubscribe();
-	}, [constraints, path]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [path, constraintsKey]);
 
 	return { data, loading, error };
 }
 
 // Hook to listen to group channels
 export function useGroupChannels(groupId: string | null) {
+	const orderByConstraint = useMemo(() => firestoreOrderBy("position", "asc"), []);
 	return useCollection<any>(
 		groupId ? `groups/${groupId}/channels` : null,
-		firestoreOrderBy("position", "asc")
+		orderByConstraint
 	);
 }
 
@@ -113,8 +120,9 @@ export function useGroupMembers(groupId: string | null) {
 
 // Hook to listen to group roles
 export function useGroupRoles(groupId: string | null) {
+	const orderByConstraint = useMemo(() => firestoreOrderBy("position", "desc"), []);
 	return useCollection<any>(
 		groupId ? `groups/${groupId}/roles` : null,
-		firestoreOrderBy("position", "desc")
+		orderByConstraint
 	);
 }

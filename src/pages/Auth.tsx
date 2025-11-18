@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { signUpWithEmail, signInWithEmail, signInWithGoogle } from '@/services/auth';
-import toast from 'react-hot-toast';
+import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({

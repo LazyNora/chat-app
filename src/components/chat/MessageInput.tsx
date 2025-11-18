@@ -4,7 +4,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/stores/authStore";
 import { sendMessage, sendMessageWithFiles } from "@/services/messages";
 import { Paperclip, Send, X } from "lucide-react";
-import toast from "react-hot-toast";
+import { toast } from "sonner";
 
 interface MessageInputProps {
 	groupId: string;

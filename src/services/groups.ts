@@ -6,11 +6,10 @@ import {
 	getDocs,
 	query,
 	where,
-	deleteDoc,
 	serverTimestamp,
 	writeBatch,
-	Timestamp,
 	increment,
+	collectionGroup,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Group, GroupMember, Role, GroupSettings } from "@/types";
@@ -152,17 +151,27 @@ export async function getGroup(groupId: string): Promise<Group | null> {
 export async function getUserGroups(userId: string): Promise<Group[]> {
 	const groups: Group[] = [];
 
-	// Query all groups where user is a member (we need to check subcollection)
-	// This is inefficient - in production, you might want to denormalize this
-	const groupsRef = collection(db, "groups");
-	const groupsSnap = await getDocs(groupsRef);
+	// Use collectionGroup to query all members subcollections across all groups
+	const membersQuery = query(
+		collectionGroup(db, "members"),
+		where("userId", "==", userId)
+	);
 
-	for (const groupDoc of groupsSnap.docs) {
-		const memberRef = doc(db, `groups/${groupDoc.id}/members`, userId);
-		const memberSnap = await getDoc(memberRef);
+	const membersSnap = await getDocs(membersQuery);
 
-		if (memberSnap.exists()) {
-			groups.push({ id: groupDoc.id, ...groupDoc.data() } as Group);
+	// For each membership, fetch the parent group document
+	for (const memberDoc of membersSnap.docs) {
+		// Get the group ID from the document reference path
+		// Path format: groups/{groupId}/members/{userId}
+		const groupId = memberDoc.ref.parent.parent?.id;
+
+		if (groupId) {
+			const groupRef = doc(db, "groups", groupId);
+			const groupSnap = await getDoc(groupRef);
+
+			if (groupSnap.exists()) {
+				groups.push({ id: groupSnap.id, ...groupSnap.data() } as Group);
+			}
 		}
 	}
 

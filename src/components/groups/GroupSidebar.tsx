@@ -26,14 +26,17 @@ export function GroupSidebar() {
 		if (user) {
 			getUserGroups(user.uid).then(setGroups);
 		}
-	}, [user, setGroups]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [user]);
 
 	// Update channels when they change in Firestore
 	useEffect(() => {
 		if (firestoreChannels) {
+			console.log('firestoreChannels', firestoreChannels);
 			setChannels(firestoreChannels);
 		}
-	}, [firestoreChannels, setChannels]);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [firestoreChannels]);
 
 	const selectedGroup = groups.find((g) => g.id === selectedGroupId);
 
