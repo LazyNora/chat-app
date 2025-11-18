@@ -2,22 +2,48 @@ import { useState } from "react";
 import type { Message } from "@/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import { useAuthStore } from "@/stores/authStore";
-import { addReaction, removeReaction, deleteMessage, editMessage } from "@/services/messages";
+import { addReaction, removeReaction, editMessage } from "@/services/messages";
+import { MessageContextMenu } from "./MessageContextMenu";
+import { MessageContent } from "./MessageContent";
+import { MessageReply } from "./MessageReply";
+import { ThreadButton } from "./ThreadButton";
 import { formatDistance } from "date-fns";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import { MoreVertical, Edit, Trash, Smile } from "lucide-react";
+import { Edit, Pin } from "lucide-react";
+import { MessageReactions } from "./MessageReactions";
 import { toast } from "sonner";
+import type { Thread } from "@/types";
 
 interface MessageItemProps {
 	message: Message;
 	groupId: string;
 	channelId: string;
 	showAvatar: boolean;
+	isPinned?: boolean;
+	thread?: Thread | null;
+	onReply?: (message: Message) => void;
+	onCreateThread?: (message: Message) => void;
+	onOpenThread?: (threadId: string) => void;
 }
 
-export function MessageItem({ message, groupId, channelId, showAvatar }: MessageItemProps) {
+export function MessageItem({
+	message,
+	groupId,
+	channelId,
+	showAvatar,
+	isPinned = false,
+	thread,
+	onReply,
+	onCreateThread,
+	onOpenThread,
+}: MessageItemProps) {
 	const { user } = useAuthStore();
 	const [showActions, setShowActions] = useState(false);
 	const [isEditing, setIsEditing] = useState(false);
@@ -44,18 +70,6 @@ export function MessageItem({ message, groupId, channelId, showAvatar }: Message
 		}
 	};
 
-	const handleDelete = async () => {
-		if (!confirm("Are you sure you want to delete this message?")) return;
-
-		try {
-			await deleteMessage(groupId, channelId, message.id);
-			toast.success("Message deleted");
-		} catch (error) {
-			console.error("Error deleting message:", error);
-			toast.error("Failed to delete message");
-		}
-	};
-
 	const handleEdit = async () => {
 		if (!editContent.trim()) return;
 
@@ -70,27 +84,49 @@ export function MessageItem({ message, groupId, channelId, showAvatar }: Message
 	};
 
 	return (
-		<div
-			className="group flex gap-3 hover:bg-muted/50 p-2 rounded"
-			onMouseEnter={() => setShowActions(true)}
-			onMouseLeave={() => setShowActions(false)}>
-			{showAvatar ? (
-				<Avatar className="h-10 w-10">
-					<AvatarImage src={message.senderPhotoURL || undefined} />
-					<AvatarFallback>{message.senderName.charAt(0).toUpperCase()}</AvatarFallback>
-				</Avatar>
-			) : (
-				<div className="w-10" />
-			)}
-
-			<div className="flex-1 min-w-0">
-				{showAvatar && (
-					<div className="flex items-baseline gap-2 mb-1">
-						<span className="font-semibold">{message.senderName}</span>
-						<span className="text-xs text-muted-foreground">{timestamp}</span>
-						{message.edited && <span className="text-xs text-muted-foreground">(edited)</span>}
-					</div>
+		<MessageContextMenu
+			message={message}
+			groupId={groupId}
+			channelId={channelId}
+			isPinned={isPinned}
+			onEdit={isOwner ? () => setIsEditing(true) : undefined}
+			onReply={onReply ? () => onReply(message) : undefined}
+			onCreateThread={onCreateThread ? () => onCreateThread(message) : undefined}>
+			<div
+				className="group relative flex gap-3 hover:bg-muted/50 p-2 rounded"
+				onMouseEnter={() => setShowActions(true)}
+				onMouseLeave={() => setShowActions(false)}>
+				{showAvatar ? (
+					<Avatar className="h-10 w-10">
+						<AvatarImage src={message.senderPhotoURL || undefined} />
+						<AvatarFallback>{message.senderName.charAt(0).toUpperCase()}</AvatarFallback>
+					</Avatar>
+				) : (
+					<div className="w-10" />
 				)}
+
+				<div className="flex-1 min-w-0">
+					{showAvatar && (
+						<div className="flex items-baseline gap-2 mb-1">
+							<span className="font-semibold">{message.senderName}</span>
+							<span className="text-xs text-muted-foreground">{timestamp}</span>
+							{message.edited && <span className="text-xs text-muted-foreground">(edited)</span>}
+							{isPinned && (
+								<Badge variant="secondary" className="text-xs">
+									<Pin className="h-3 w-3 mr-1" />
+									Pinned
+								</Badge>
+							)}
+						</div>
+					)}
+
+					{message.replyTo && (
+						<MessageReply
+							groupId={groupId}
+							channelId={channelId}
+							replyToId={message.replyTo}
+						/>
+					)}
 
 				{isEditing ? (
 					<div className="space-y-2">
@@ -110,9 +146,33 @@ export function MessageItem({ message, groupId, channelId, showAvatar }: Message
 						</div>
 					</div>
 				) : (
-					<div className="prose prose-sm dark:prose-invert max-w-none">
-						<ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-					</div>
+					<>
+						{message.type === "gif" && message.gifURL ? (
+							<div className="mt-2">
+								<img
+									src={message.gifURL}
+									alt="GIF"
+									className="max-w-md rounded-lg cursor-pointer"
+									onClick={() => window.open(message.gifURL!, "_blank")}
+								/>
+								{message.content && message.content !== "Sent a GIF" && (
+									<div className="mt-2">
+										<MessageContent
+											content={message.content}
+											mentions={message.mentions}
+											mentionsEveryone={message.mentionsEveryone}
+										/>
+									</div>
+								)}
+							</div>
+						) : (
+							<MessageContent
+								content={message.content}
+								mentions={message.mentions}
+								mentionsEveryone={message.mentionsEveryone}
+							/>
+						)}
+					</>
 				)}
 
 				{message.files && message.files.length > 0 && (
@@ -158,29 +218,41 @@ export function MessageItem({ message, groupId, channelId, showAvatar }: Message
 						))}
 					</div>
 				)}
-			</div>
 
-			{showActions && isOwner && !isEditing && (
-				<div className="flex items-start gap-1">
-					<Button
-						size="icon"
-						variant="ghost"
-						className="h-6 w-6"
-						onClick={() => handleReaction("👍")}>
-						<Smile className="h-4 w-4" />
-					</Button>
-					<Button
-						size="icon"
-						variant="ghost"
-						className="h-6 w-6"
-						onClick={() => setIsEditing(true)}>
-						<Edit className="h-4 w-4" />
-					</Button>
-					<Button size="icon" variant="ghost" className="h-6 w-6" onClick={handleDelete}>
-						<Trash className="h-4 w-4" />
-					</Button>
+					{message.threadId && thread && onOpenThread && (
+						<div className="mt-2">
+							<ThreadButton
+								thread={thread}
+								onClick={() => onOpenThread(message.threadId!)}
+							/>
+						</div>
+					)}
 				</div>
-			)}
-		</div>
+
+				{/* Overlay action buttons */}
+				{showActions && !isEditing && (
+					<TooltipProvider>
+						<div className="absolute right-2 top-2 flex items-center gap-1 bg-background/90 backdrop-blur-sm border rounded-md p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+							<MessageReactions onReaction={handleReaction} />
+
+							{isOwner && (
+								<Tooltip>
+									<TooltipTrigger asChild>
+										<Button
+											size="icon"
+											variant="ghost"
+											className="h-7 w-7"
+											onClick={() => setIsEditing(true)}>
+											<Edit className="h-4 w-4" />
+										</Button>
+									</TooltipTrigger>
+									<TooltipContent>Edit Message</TooltipContent>
+								</Tooltip>
+							)}
+						</div>
+					</TooltipProvider>
+				)}
+			</div>
+		</MessageContextMenu>
 	);
 }

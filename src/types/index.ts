@@ -113,6 +113,14 @@ export interface ChannelSettings {
   maxFileSize: number | null;
 }
 
+export interface ChannelCategory {
+  id: string;
+  name: string;
+  position: number;
+  collapsed: boolean;
+  createdAt: Timestamp;
+}
+
 // Message Types
 export interface Message {
   id: string;

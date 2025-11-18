@@ -9,6 +9,7 @@ interface GroupState {
 	members: GroupMember[];
 	roles: Role[];
 	setSelectedGroup: (groupId: string | null) => void;
+	setSelectedGroupId: (groupId: string | null) => void;
 	setSelectedChannel: (channelId: string | null) => void;
 	setGroups: (groups: Group[]) => void;
 	setChannels: (channels: Channel[]) => void;
@@ -27,6 +28,7 @@ export const useGroupStore = create<GroupState>((set) => ({
 	members: [],
 	roles: [],
 	setSelectedGroup: (groupId) => set({ selectedGroupId: groupId, selectedChannelId: null }),
+	setSelectedGroupId: (groupId) => set({ selectedGroupId: groupId }),
 	setSelectedChannel: (channelId) => set({ selectedChannelId: channelId }),
 	setGroups: (groups) => set({ groups }),
 	setChannels: (channels) => set({ channels }),

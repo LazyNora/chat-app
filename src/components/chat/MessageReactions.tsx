@@ -1,36 +1,47 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Smile } from 'lucide-react';
-import EmojiPicker from 'emoji-picker-react';
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from '@/components/ui/popover';
+import {
+	EmojiPicker,
+	EmojiPickerSearch,
+	EmojiPickerContent,
+	EmojiPickerFooter,
+} from '@/components/ui/emoji-picker';
 
 interface MessageReactionsProps {
-  onReaction: (emoji: string) => void;
+	onReaction: (emoji: string) => void;
 }
 
 export function MessageReactions({ onReaction }: MessageReactionsProps) {
-  const [showPicker, setShowPicker] = useState(false);
+	const [isOpen, setIsOpen] = useState(false);
 
-  return (
-    <div className="relative">
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => setShowPicker(!showPicker)}
-      >
-        <Smile className="h-4 w-4" />
-      </Button>
-
-      {showPicker && (
-        <div className="absolute z-50 mt-2">
-          <EmojiPicker
-            onEmojiClick={(emojiData) => {
-              onReaction(emojiData.emoji);
-              setShowPicker(false);
-            }}
-          />
-        </div>
-      )}
-    </div>
-  );
+	return (
+		<Popover open={isOpen} onOpenChange={setIsOpen}>
+			<PopoverTrigger asChild>
+				<Button
+					size="sm"
+					variant="ghost"
+					className="h-7 w-7">
+					<Smile className="h-4 w-4" />
+				</Button>
+			</PopoverTrigger>
+			<PopoverContent className="w-fit p-0" align="start">
+				<EmojiPicker
+					className="h-[342px]"
+					onEmojiSelect={({ emoji }) => {
+						onReaction(emoji);
+						setIsOpen(false);
+					}}>
+					<EmojiPickerSearch />
+					<EmojiPickerContent />
+					<EmojiPickerFooter />
+				</EmojiPicker>
+			</PopoverContent>
+		</Popover>
+	);
 }
-

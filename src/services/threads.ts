@@ -2,6 +2,7 @@ import {
 	collection,
 	doc,
 	setDoc,
+	getDoc,
 	getDocs,
 	query,
 	where,
@@ -99,6 +100,48 @@ export async function getChannelThreads(groupId: string, channelId: string): Pro
 
 	const snapshot = await getDocs(q);
 	return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Thread[];
+}
+
+// Get thread messages
+export async function getThreadMessages(
+	groupId: string,
+	channelId: string,
+	threadId: string
+): Promise<Message[]> {
+	const messagesRef = collection(
+		db,
+		`groups/${groupId}/channels/${channelId}/threads/${threadId}/messages`
+	);
+	const q = query(messagesRef, where("deleted", "==", false), orderBy("createdAt", "asc"));
+
+	const snapshot = await getDocs(q);
+	return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Message[];
+}
+
+// Get a single thread
+export async function getThread(
+	groupId: string,
+	channelId: string,
+	threadId: string
+): Promise<Thread | null> {
+	const threadRef = doc(db, `groups/${groupId}/channels/${channelId}/threads`, threadId);
+	const threadSnap = await getDoc(threadRef);
+
+	if (threadSnap.exists()) {
+		return { id: threadSnap.id, ...threadSnap.data() } as Thread;
+	}
+
+	return null;
+}
+
+// Get thread message count for a message
+export async function getThreadMessageCount(
+	groupId: string,
+	channelId: string,
+	threadId: string
+): Promise<number> {
+	const thread = await getThread(groupId, channelId, threadId);
+	return thread?.messageCount || 0;
 }
 
 // Archive/unarchive thread

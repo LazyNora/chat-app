@@ -1,34 +1,44 @@
-import { useEffect } from 'react';
+import { useEffect } from "react";
 
 export interface KeyboardShortcut {
-  key: string;
-  ctrlKey?: boolean;
-  shiftKey?: boolean;
-  altKey?: boolean;
-  callback: () => void;
+	key: string;
+	ctrlKey?: boolean;
+	shiftKey?: boolean;
+	altKey?: boolean;
+	metaKey?: boolean;
+	callback: () => void;
 }
 
 export function useKeyboardShortcuts(shortcuts: KeyboardShortcut[]) {
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      for (const shortcut of shortcuts) {
-        const keyMatches = e.key.toLowerCase() === shortcut.key.toLowerCase();
-        const ctrlMatches = shortcut.ctrlKey === undefined || e.ctrlKey === shortcut.ctrlKey;
-        const shiftMatches = shortcut.shiftKey === undefined || e.shiftKey === shortcut.shiftKey;
-        const altMatches = shortcut.altKey === undefined || e.altKey === shortcut.altKey;
+	useEffect(() => {
+		const handleKeyDown = (e: KeyboardEvent) => {
+			for (const shortcut of shortcuts) {
+				const keyMatches =
+					e.key.toLowerCase() === shortcut.key.toLowerCase() ||
+					(shortcut.key === "Cmd" && (e.metaKey || e.ctrlKey));
 
-        if (keyMatches && ctrlMatches && shiftMatches && altMatches) {
-          e.preventDefault();
-          shortcut.callback();
-        }
-      }
-    };
+				// Handle Cmd/Ctrl
+				const isMac = navigator.platform.includes("Mac");
+				const cmdOrCtrl =
+					shortcut.ctrlKey === undefined ||
+					(isMac ? e.metaKey === shortcut.ctrlKey : e.ctrlKey === shortcut.ctrlKey);
 
-    window.addEventListener('keydown', handleKeyDown);
+				const shiftMatches =
+					shortcut.shiftKey === undefined || e.shiftKey === shortcut.shiftKey;
+				const altMatches = shortcut.altKey === undefined || e.altKey === shortcut.altKey;
 
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [shortcuts]);
+				if (keyMatches && cmdOrCtrl && shiftMatches && altMatches) {
+					e.preventDefault();
+					shortcut.callback();
+				}
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+
+		return () => {
+			window.removeEventListener("keydown", handleKeyDown);
+		};
+	}, [shortcuts]);
 }
 

@@ -2,7 +2,8 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { Auth } from "@/pages/Auth";
 import { Home } from "@/pages/Home";
-import { useAuthStore } from "@/stores/authStore";
+import { GroupPage } from "@/pages/GroupPage";
+import { InvitePage } from "@/pages/InvitePage";
 
 function App() {
 	return (
@@ -10,6 +11,8 @@ function App() {
 			<Routes>
 				<Route path="/auth" element={<Auth />} />
 				<Route path="/" element={<Home />} />
+				<Route path="/groups/:groupId" element={<GroupPage />} />
+				<Route path="/invite/:code" element={<InvitePage />} />
 				<Route path="*" element={<Navigate to="/" replace />} />
 			</Routes>
 		</AuthProvider>

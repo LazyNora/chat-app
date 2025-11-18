@@ -361,3 +361,103 @@ export async function removeRoleFromMember(
 		);
 	}
 }
+
+// Timeout a member (temporary mute)
+export async function timeoutMember(
+	groupId: string,
+	userId: string,
+	durationMs: number,
+	reason?: string
+): Promise<void> {
+	const timeoutRef = doc(db, `groups/${groupId}/timeouts`, userId);
+	const expiresAt = new Date(Date.now() + durationMs);
+
+	await setDoc(timeoutRef, {
+		userId,
+		reason: reason || null,
+		expiresAt,
+		createdAt: serverTimestamp(),
+	});
+}
+
+// Remove timeout from member
+export async function removeTimeout(groupId: string, userId: string): Promise<void> {
+	const timeoutRef = doc(db, `groups/${groupId}/timeouts`, userId);
+	const timeoutSnap = await getDoc(timeoutRef);
+
+	if (timeoutSnap.exists()) {
+		await setDoc(timeoutRef, {}, { merge: false });
+	}
+}
+
+// Ban a member
+export async function banMember(
+	groupId: string,
+	userId: string,
+	reason?: string,
+	deleteMessages: boolean = false
+): Promise<void> {
+	const banRef = doc(db, `groups/${groupId}/bans`, userId);
+
+	const batch = writeBatch(db);
+
+	// Create ban document
+	batch.set(banRef, {
+		userId,
+		reason: reason || null,
+		createdAt: serverTimestamp(),
+	});
+
+	// Remove member
+	const memberRef = doc(db, `groups/${groupId}/members`, userId);
+	batch.delete(memberRef);
+
+	// Decrement member count
+	const groupRef = doc(db, "groups", groupId);
+	batch.update(groupRef, { memberCount: increment(-1) });
+
+	await batch.commit();
+
+	// TODO: Implement message deletion if deleteMessages is true
+	// This would require a cloud function or batch operation to delete all messages from the user
+}
+
+// Unban a member
+export async function unbanMember(groupId: string, userId: string): Promise<void> {
+	const banRef = doc(db, `groups/${groupId}/bans`, userId);
+	const banSnap = await getDoc(banRef);
+
+	if (banSnap.exists()) {
+		await setDoc(banRef, {}, { merge: false });
+	}
+}
+
+// Check if a user is banned
+export async function isUserBanned(groupId: string, userId: string): Promise<boolean> {
+	const banRef = doc(db, `groups/${groupId}/bans`, userId);
+	const banSnap = await getDoc(banRef);
+
+	return banSnap.exists() && Object.keys(banSnap.data() || {}).length > 0;
+}
+
+// Check if a user is timed out
+export async function isUserTimedOut(groupId: string, userId: string): Promise<boolean> {
+	const timeoutRef = doc(db, `groups/${groupId}/timeouts`, userId);
+	const timeoutSnap = await getDoc(timeoutRef);
+
+	if (!timeoutSnap.exists() || Object.keys(timeoutSnap.data() || {}).length === 0) {
+		return false;
+	}
+
+	const timeout = timeoutSnap.data();
+	const expiresAt = timeout.expiresAt?.toDate?.() || new Date(0);
+
+	// Check if timeout has expired
+	if (expiresAt < new Date()) {
+		// Clean up expired timeout
+		await setDoc(timeoutRef, {}, { merge: false });
+		return false;
+	}
+
+	return true;
+}

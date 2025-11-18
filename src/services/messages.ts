@@ -31,10 +31,19 @@ export async function sendMessage(
 	mentions: string[] = [],
 	mentionsEveryone: boolean = false,
 	replyTo: string | null = null,
-	files: MessageFile[] | null = null
+	files: MessageFile[] | null = null,
+	gifURL: string | null = null
 ): Promise<string> {
 	const messageRef = doc(collection(db, `groups/${groupId}/channels/${channelId}/messages`));
 	const messageId = messageRef.id;
+
+	// Determine message type
+	let messageType: "text" | "file" | "gif" | "sticker" | "system" = "text";
+	if (gifURL) {
+		messageType = "gif";
+	} else if (files && files.length > 0) {
+		messageType = "file";
+	}
 
 	const messageData: Omit<Message, "id" | "createdAt"> & {
 		createdAt: ReturnType<typeof serverTimestamp>;
@@ -43,9 +52,9 @@ export async function sendMessage(
 		senderId,
 		senderName,
 		senderPhotoURL,
-		type: files && files.length > 0 ? "file" : "text",
+		type: messageType,
 		files,
-		gifURL: null,
+		gifURL,
 		stickerURL: null,
 		mentions,
 		mentionsEveryone,
@@ -72,6 +81,22 @@ export async function sendMessage(
 	await batch.commit();
 
 	return messageId;
+}
+
+// Get a single message by ID
+export async function getMessage(
+	groupId: string,
+	channelId: string,
+	messageId: string
+): Promise<Message | null> {
+	const messageRef = doc(db, `groups/${groupId}/channels/${channelId}/messages`, messageId);
+	const messageSnap = await getDoc(messageRef);
+
+	if (messageSnap.exists()) {
+		return { id: messageSnap.id, ...messageSnap.data() } as Message;
+	}
+
+	return null;
 }
 
 // Get messages from a channel
@@ -322,4 +347,68 @@ export async function getMentionedMessages(
 
 	const snapshot = await getDocs(q);
 	return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() })) as Message[];
+}
+
+// Pin a message to channel
+export async function pinMessage(
+	groupId: string,
+	channelId: string,
+	messageId: string
+): Promise<void> {
+	const channelRef = doc(db, `groups/${groupId}/channels`, channelId);
+	const channelSnap = await getDoc(channelRef);
+
+	if (channelSnap.exists()) {
+		const channel = channelSnap.data();
+		const pinnedMessages = channel.pinnedMessageIds || [];
+
+		// Limit to 50 pinned messages
+		if (pinnedMessages.length >= 50) {
+			throw new Error("Channel has reached maximum of 50 pinned messages");
+		}
+
+		await updateDoc(channelRef, {
+			pinnedMessageIds: arrayUnion(messageId),
+		});
+	}
+}
+
+// Unpin a message from channel
+export async function unpinMessage(
+	groupId: string,
+	channelId: string,
+	messageId: string
+): Promise<void> {
+	const channelRef = doc(db, `groups/${groupId}/channels`, channelId);
+	await updateDoc(channelRef, {
+		pinnedMessageIds: arrayRemove(messageId),
+	});
+}
+
+// Get pinned messages
+export async function getPinnedMessages(
+	groupId: string,
+	channelId: string
+): Promise<Message[]> {
+	const channelRef = doc(db, `groups/${groupId}/channels`, channelId);
+	const channelSnap = await getDoc(channelRef);
+
+	if (!channelSnap.exists()) return [];
+
+	const channel = channelSnap.data();
+	const pinnedMessageIds = channel.pinnedMessageIds || [];
+
+	if (pinnedMessageIds.length === 0) return [];
+
+	// Fetch all pinned messages
+	const messages: Message[] = [];
+	for (const messageId of pinnedMessageIds) {
+		const messageRef = doc(db, `groups/${groupId}/channels/${channelId}/messages`, messageId);
+		const messageSnap = await getDoc(messageRef);
+		if (messageSnap.exists()) {
+			messages.push({ id: messageSnap.id, ...messageSnap.data() } as Message);
+		}
+	}
+
+	return messages;
 }

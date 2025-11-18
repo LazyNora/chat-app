@@ -83,6 +83,37 @@ export async function findInvite(
 	return null;
 }
 
+// Find invite by code (searches all groups)
+export async function findInviteByCode(
+	code: string
+): Promise<{ groupId: string; invite: Invite } | null> {
+	// Get all groups
+	const groupsRef = collection(db, "groups");
+	const groupsSnap = await getDocs(groupsRef);
+
+	// Search through each group's invites
+	for (const groupDoc of groupsSnap.docs) {
+		const groupId = groupDoc.id;
+		const inviteRef = doc(db, `groups/${groupId}/invites`, code);
+		const inviteSnap = await getDoc(inviteRef);
+
+		if (inviteSnap.exists()) {
+			const invite = inviteSnap.data() as Invite;
+			// Check if expired
+			if (invite.expiresAt && invite.expiresAt.toMillis() < Date.now()) {
+				continue;
+			}
+			// Check if max uses reached
+			if (invite.maxUses && invite.usedCount >= invite.maxUses) {
+				continue;
+			}
+			return { groupId, invite };
+		}
+	}
+
+	return null;
+}
+
 // Use an invite (join group)
 export async function useInvite(
 	groupId: string,
