@@ -32,14 +32,18 @@ export async function sendMessage(
 	mentionsEveryone: boolean = false,
 	replyTo: string | null = null,
 	files: MessageFile[] | null = null,
-	gifURL: string | null = null
+	gifURL: string | null = null,
+	audioURL: string | null = null,
+	audioDuration: number | null = null
 ): Promise<string> {
 	const messageRef = doc(collection(db, `groups/${groupId}/channels/${channelId}/messages`));
 	const messageId = messageRef.id;
 
 	// Determine message type
-	let messageType: "text" | "file" | "gif" | "sticker" | "system" = "text";
-	if (gifURL) {
+	let messageType: "text" | "file" | "gif" | "sticker" | "system" | "voice" = "text";
+	if (audioURL) {
+		messageType = "voice";
+	} else if (gifURL) {
 		messageType = "gif";
 	} else if (files && files.length > 0) {
 		messageType = "file";
@@ -56,6 +60,8 @@ export async function sendMessage(
 		files,
 		gifURL,
 		stickerURL: null,
+		audioURL,
+		audioDuration,
 		mentions,
 		mentionsEveryone,
 		reactions: {},
@@ -251,6 +257,23 @@ export async function uploadMessageFile(
 	};
 }
 
+// Upload audio file (voice message) to Firebase Storage
+export async function uploadAudioFile(
+	groupId: string,
+	channelId: string,
+	audioBlob: Blob
+): Promise<string> {
+	const timestamp = Date.now();
+	const fileName = `${timestamp}_voice.webm`;
+	const filePath = `groups/${groupId}/channels/${channelId}/audio/${fileName}`;
+	const fileRef = ref(storage, filePath);
+
+	await uploadBytes(fileRef, audioBlob);
+	const downloadURL = await getDownloadURL(fileRef);
+
+	return downloadURL;
+}
+
 // Send message with files
 export async function sendMessageWithFiles(
 	groupId: string,
@@ -386,10 +409,7 @@ export async function unpinMessage(
 }
 
 // Get pinned messages
-export async function getPinnedMessages(
-	groupId: string,
-	channelId: string
-): Promise<Message[]> {
+export async function getPinnedMessages(groupId: string, channelId: string): Promise<Message[]> {
 	const channelRef = doc(db, `groups/${groupId}/channels`, channelId);
 	const channelSnap = await getDoc(channelRef);
 

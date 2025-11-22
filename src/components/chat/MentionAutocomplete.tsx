@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { GroupMember } from "@/types";
@@ -40,10 +39,11 @@ export function MentionAutocomplete({
 
 	return (
 		<div
-			className="absolute z-50 bg-popover border rounded-md shadow-md w-64"
+			className="fixed z-100 bg-popover border rounded-md shadow-md w-64 max-h-64"
 			style={{
-				top: position.top,
-				left: position.left,
+				top: `${position.top}px`,
+				left: `${position.left}px`,
+				transform: "translateY(-100%)", // Position above the input
 			}}>
 			<ScrollArea className="max-h-64">
 				<div className="p-1">
@@ -62,9 +62,7 @@ export function MentionAutocomplete({
 									</div>
 									<div className="flex-1 text-left">
 										<div className="font-medium">everyone</div>
-										<div className="text-xs text-muted-foreground">
-											Notify all members
-										</div>
+										<div className="text-xs text-muted-foreground">Notify all members</div>
 									</div>
 								</button>
 							);
@@ -80,9 +78,7 @@ export function MentionAutocomplete({
 								)}>
 								<Avatar className="h-8 w-8">
 									<AvatarImage src={item.photoURL || undefined} />
-									<AvatarFallback>
-										{item.displayName.charAt(0).toUpperCase()}
-									</AvatarFallback>
+									<AvatarFallback>{item.displayName.charAt(0).toUpperCase()}</AvatarFallback>
 								</Avatar>
 								<div className="flex-1 text-left">
 									<div className="font-medium">{item.displayName}</div>
@@ -95,4 +91,3 @@ export function MentionAutocomplete({
 		</div>
 	);
 }
-

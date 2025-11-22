@@ -13,7 +13,7 @@ const defaultConfig: LayoutConfig = {
 	threadPanelWidth: 400,
 	pinnedPanelWidth: 400,
 	memberSidebarVisible: true,
-	channelsSidebarWidth: 240,
+	channelsSidebarWidth: 20,
 };
 
 export function useLayoutStorage() {
@@ -44,4 +44,3 @@ export function useLayoutStorage() {
 
 	return { config, updateConfig };
 }
-

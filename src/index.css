@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 @plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -119,4 +120,11 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+@layer prose-m-none {
+	* {
+		@apply prose-headings:m-0;
+    @apply prose-p:m-0;
+	}
 }

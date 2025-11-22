@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -29,11 +29,7 @@ export function MemberSidebar({ groupId }: MemberSidebarProps) {
 	const { user } = useAuthStore();
 	const { getOnlineStatus } = usePresenceStore();
 
-	useEffect(() => {
-		loadMembers();
-	}, [groupId]);
-
-	const loadMembers = async () => {
+	const loadMembers = useCallback(async () => {
 		try {
 			setLoading(true);
 			const [membersData, rolesData] = await Promise.all([
@@ -47,16 +43,17 @@ export function MemberSidebar({ groupId }: MemberSidebarProps) {
 		} finally {
 			setLoading(false);
 		}
-	};
+	}, [groupId]);
+
+	useEffect(() => {
+		loadMembers();
+	}, [loadMembers]);
 
 	// Group members by role
-	const membersByRole = roles.reduce(
-		(acc, role) => {
-			acc[role.id] = members.filter((m) => m.roles.includes(role.id));
-			return acc;
-		},
-		{} as Record<string, GroupMember[]>
-	);
+	const membersByRole = roles.reduce((acc, role) => {
+		acc[role.id] = members.filter((m) => m.roles.includes(role.id));
+		return acc;
+	}, {} as Record<string, GroupMember[]>);
 
 	const membersWithoutRoles = members.filter((m) => m.roles.length === 0);
 
@@ -129,8 +126,16 @@ export function MemberSidebar({ groupId }: MemberSidebarProps) {
 										<div className="space-y-0.5">
 											{sortMembers(roleMembers).map((member) => {
 												const onlineStatus = getOnlineStatus(member.userId);
-												const isOnline = onlineStatus?.status === "online";
+												const status = onlineStatus?.status || "offline";
 												const isSelf = user?.uid === member.userId;
+
+												const statusColor = {
+													online: "bg-green-500",
+													idle: "bg-yellow-500",
+													dnd: "bg-red-500",
+													invisible: "bg-gray-500",
+													offline: "bg-gray-500",
+												}[status];
 
 												return (
 													<MemberProfilePopover
@@ -145,13 +150,21 @@ export function MemberSidebar({ groupId }: MemberSidebarProps) {
 															)}>
 															<div className="relative">
 																<Avatar className="h-8 w-8">
-																	<AvatarImage src={member.photoURL || undefined} />
+																	<AvatarImage
+																		src={member.photoURL || undefined}
+																		referrerPolicy="no-referrer"
+																	/>
 																	<AvatarFallback>
 																		{member.displayName.charAt(0).toUpperCase()}
 																	</AvatarFallback>
 																</Avatar>
-																{isOnline && (
-																	<div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+																{status !== "offline" && (
+																	<div
+																		className={cn(
+																			"absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background",
+																			statusColor
+																		)}
+																	/>
 																)}
 															</div>
 															<span className="flex-1 truncate text-sm">{member.displayName}</span>
@@ -178,8 +191,16 @@ export function MemberSidebar({ groupId }: MemberSidebarProps) {
 									<div className="space-y-0.5">
 										{sortMembers(filterMembers(membersWithoutRoles)).map((member) => {
 											const onlineStatus = getOnlineStatus(member.userId);
-											const isOnline = onlineStatus?.status === "online";
+											const status = onlineStatus?.status || "offline";
 											const isSelf = user?.uid === member.userId;
+
+											const statusColor = {
+												online: "bg-green-500",
+												idle: "bg-yellow-500",
+												dnd: "bg-red-500",
+												invisible: "bg-gray-500",
+												offline: "bg-gray-500",
+											}[status];
 
 											return (
 												<MemberProfilePopover
@@ -194,13 +215,21 @@ export function MemberSidebar({ groupId }: MemberSidebarProps) {
 														)}>
 														<div className="relative">
 															<Avatar className="h-8 w-8">
-																<AvatarImage src={member.photoURL || undefined} />
+																<AvatarImage
+																	src={member.photoURL || undefined}
+																	referrerPolicy="no-referrer"
+																/>
 																<AvatarFallback>
 																	{member.displayName.charAt(0).toUpperCase()}
 																</AvatarFallback>
 															</Avatar>
-															{isOnline && (
-																<div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-background" />
+															{status !== "offline" && (
+																<div
+																	className={cn(
+																		"absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-background",
+																		statusColor
+																	)}
+																/>
 															)}
 														</div>
 														<span className="flex-1 truncate text-sm">{member.displayName}</span>
@@ -218,4 +247,3 @@ export function MemberSidebar({ groupId }: MemberSidebarProps) {
 		</div>
 	);
 }
-

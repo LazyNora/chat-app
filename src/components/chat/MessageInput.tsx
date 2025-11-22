@@ -2,23 +2,35 @@ import { useState, useRef, useEffect, type KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/stores/authStore";
-import { sendMessage, sendMessageWithFiles } from "@/services/messages";
+import { sendMessage, sendMessageWithFiles, uploadAudioFile } from "@/services/messages";
+import { sendThreadMessage } from "@/services/threads";
 import { getGroupMembers } from "@/services/groups";
 import { MentionAutocomplete } from "./MentionAutocomplete";
 import { ReplyPreview } from "./ReplyPreview";
 import { GifPicker } from "./GifPicker";
-import { Paperclip, Send, X, ImageIcon } from "lucide-react";
+import { VoiceMessageRecorder } from "./VoiceMessageRecorder";
+import { Paperclip, Send, X, ImageIcon, Mic } from "lucide-react";
 import { toast } from "sonner";
 import type { GroupMember, Message } from "@/types";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface MessageInputProps {
 	groupId: string;
 	channelId: string;
+	threadId?: string;
 	replyingTo?: Message | null;
 	onCancelReply?: () => void;
+	disabled?: boolean;
 }
 
-export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: MessageInputProps) {
+export function MessageInput({
+	groupId,
+	channelId,
+	threadId,
+	replyingTo,
+	onCancelReply,
+	disabled = false,
+}: MessageInputProps) {
 	const [content, setContent] = useState("");
 	const [files, setFiles] = useState<File[]>([]);
 	const [sending, setSending] = useState(false);
@@ -29,9 +41,11 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 	const [selectedMentionIndex, setSelectedMentionIndex] = useState(0);
 	const [cursorPosition, setCursorPosition] = useState(0);
 	const [showGifPicker, setShowGifPicker] = useState(false);
+	const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const textareaRef = useRef<HTMLTextAreaElement>(null);
 	const { user, userProfile } = useAuthStore();
+	const { hasPermission } = usePermissions(groupId);
 
 	// Load members for mentions
 	useEffect(() => {
@@ -89,11 +103,11 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 				setShowMentions(true);
 				setSelectedMentionIndex(0);
 
-				// Calculate position for autocomplete dropdown
+				// Calculate position for autocomplete dropdown - position above input
 				if (textareaRef.current) {
 					const rect = textareaRef.current.getBoundingClientRect();
 					setMentionPosition({
-						top: rect.bottom + 5,
+						top: rect.top - 5, // Position above instead of below
 						left: rect.left,
 					});
 				}
@@ -111,8 +125,7 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 		const textAfterCursor = content.slice(cursorPosition);
 
 		const mentionText = member === "everyone" ? "@everyone " : `@${member.displayName} `;
-		const newContent =
-			content.slice(0, lastAtIndex) + mentionText + textAfterCursor;
+		const newContent = content.slice(0, lastAtIndex) + mentionText + textAfterCursor;
 
 		setContent(newContent);
 		setShowMentions(false);
@@ -180,6 +193,48 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 		}
 	};
 
+	const handleVoiceMessageSend = async (audioBlob: Blob, duration: number) => {
+		if (!user || !userProfile) return;
+
+		setSending(true);
+		setShowVoiceRecorder(false);
+
+		try {
+			// Upload audio file
+			const audioURL = await uploadAudioFile(groupId, channelId, audioBlob);
+
+			// Send message with audio
+			const { userIds, mentionsEveryone } = extractMentions();
+			const replyToId = replyingTo?.id || null;
+
+			await sendMessage(
+				groupId,
+				channelId,
+				user.uid,
+				userProfile.displayName,
+				userProfile.photoURL,
+				content || "Voice message",
+				userIds,
+				mentionsEveryone,
+				replyToId,
+				null,
+				null,
+				audioURL,
+				duration
+			);
+
+			setContent("");
+			setShowMentions(false);
+			onCancelReply?.();
+			toast.success("Voice message sent!");
+		} catch (error: any) {
+			console.error("Error sending voice message:", error);
+			toast.error(error.message || "Failed to send voice message");
+		} finally {
+			setSending(false);
+		}
+	};
+
 	const handleSend = async () => {
 		if (!user || !userProfile) return;
 		if (!content.trim() && files.length === 0) return;
@@ -187,34 +242,51 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 		setSending(true);
 
 		try {
-			const { userIds, mentionsEveryone } = extractMentions();
-
-			const replyToId = replyingTo?.id || null;
-
-			if (files.length > 0) {
-				await sendMessageWithFiles(
+			// If threadId is provided, send to thread
+			if (threadId) {
+				if (!content.trim()) {
+					toast.error("Thread messages cannot contain files only");
+					setSending(false);
+					return;
+				}
+				await sendThreadMessage(
 					groupId,
 					channelId,
+					threadId,
 					user.uid,
 					userProfile.displayName,
 					userProfile.photoURL,
-					content,
-					files,
-					userIds,
-					mentionsEveryone
+					content.trim()
 				);
 			} else {
-				await sendMessage(
-					groupId,
-					channelId,
-					user.uid,
-					userProfile.displayName,
-					userProfile.photoURL,
-					content,
-					userIds,
-					mentionsEveryone,
-					replyToId
-				);
+				const { userIds, mentionsEveryone } = extractMentions();
+				const replyToId = replyingTo?.id || null;
+
+				if (files.length > 0) {
+					await sendMessageWithFiles(
+						groupId,
+						channelId,
+						user.uid,
+						userProfile.displayName,
+						userProfile.photoURL,
+						content,
+						files,
+						userIds,
+						mentionsEveryone
+					);
+				} else {
+					await sendMessage(
+						groupId,
+						channelId,
+						user.uid,
+						userProfile.displayName,
+						userProfile.photoURL,
+						content,
+						userIds,
+						mentionsEveryone,
+						replyToId
+					);
+				}
 			}
 
 			setContent("");
@@ -237,8 +309,13 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 		if (showMentions) {
 			if (e.key === "ArrowDown") {
 				e.preventDefault();
+				const filteredMembers = members.filter((m) =>
+					m.displayName.toLowerCase().includes(mentionSearch.toLowerCase())
+				);
+				const canMentionEveryone = hasPermission("mentionEveryone");
+				const showEveryone = canMentionEveryone && "everyone".includes(mentionSearch.toLowerCase());
+				const maxIndex = showEveryone ? filteredMembers.length : filteredMembers.length - 1;
 				setSelectedMentionIndex((prev) => {
-					const maxIndex = members.length; // +1 for @everyone if applicable
 					return prev < maxIndex ? prev + 1 : 0;
 				});
 				return;
@@ -246,8 +323,13 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 
 			if (e.key === "ArrowUp") {
 				e.preventDefault();
+				const filteredMembers = members.filter((m) =>
+					m.displayName.toLowerCase().includes(mentionSearch.toLowerCase())
+				);
+				const canMentionEveryone = hasPermission("mentionEveryone");
+				const showEveryone = canMentionEveryone && "everyone".includes(mentionSearch.toLowerCase());
+				const maxIndex = showEveryone ? filteredMembers.length : filteredMembers.length - 1;
 				setSelectedMentionIndex((prev) => {
-					const maxIndex = members.length;
 					return prev > 0 ? prev - 1 : maxIndex;
 				});
 				return;
@@ -259,11 +341,16 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 				const filteredMembers = members.filter((m) =>
 					m.displayName.toLowerCase().includes(mentionSearch.toLowerCase())
 				);
-				const selectedMember = filteredMembers[selectedMentionIndex];
-				if (selectedMember) {
-					handleMentionSelect(selectedMember);
-				} else if (selectedMentionIndex === 0 && mentionSearch.toLowerCase().includes("everyone")) {
-					handleMentionSelect("everyone");
+				// Check if @everyone should be shown
+				const canMentionEveryone = hasPermission("mentionEveryone");
+				const showEveryone = canMentionEveryone && "everyone".includes(mentionSearch.toLowerCase());
+				const items: (GroupMember | "everyone")[] = showEveryone
+					? ["everyone", ...filteredMembers]
+					: filteredMembers;
+
+				const selectedItem = items[selectedMentionIndex];
+				if (selectedItem) {
+					handleMentionSelect(selectedItem);
 				}
 				return;
 			}
@@ -281,6 +368,17 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 			handleSend();
 		}
 	};
+
+	if (showVoiceRecorder) {
+		return (
+			<div className="border-t space-y-0 relative">
+				<VoiceMessageRecorder
+					onSend={handleVoiceMessageSend}
+					onCancel={() => setShowVoiceRecorder(false)}
+				/>
+			</div>
+		);
+	}
 
 	return (
 		<div className="border-t space-y-0 relative">
@@ -304,82 +402,98 @@ export function MessageInput({ groupId, channelId, replyingTo, onCancelReply }: 
 					</div>
 				)}
 
-			{showMentions && (
-				<MentionAutocomplete
-					members={members}
-					searchQuery={mentionSearch}
-					groupId={groupId}
-					selectedIndex={selectedMentionIndex}
-					onSelect={handleMentionSelect}
-					position={mentionPosition}
-				/>
-			)}
+				{showMentions && (
+					<MentionAutocomplete
+						members={members}
+						searchQuery={mentionSearch}
+						groupId={groupId}
+						selectedIndex={selectedMentionIndex}
+						onSelect={handleMentionSelect}
+						position={mentionPosition}
+					/>
+				)}
 
-			<GifPicker
-				open={showGifPicker}
-				onClose={() => setShowGifPicker(false)}
-				onSelect={handleGifSelect}
-			/>
-
-			<div className="relative">
-				<input
-					ref={fileInputRef}
-					type="file"
-					multiple
-					className="hidden"
-					onChange={handleFileSelect}
-					accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+				<GifPicker
+					open={showGifPicker}
+					onClose={() => setShowGifPicker(false)}
+					onSelect={handleGifSelect}
 				/>
 
-				<Textarea
-					ref={textareaRef}
-					value={content}
-					onChange={handleContentChange}
-					onKeyDown={handleKeyPress}
-					placeholder="Type a message... (Markdown supported, type @ to mention)"
-					className="flex-1 min-h-[60px] max-h-[200px] resize-none pr-24"
-					disabled={sending}
-				/>
+				<div className="relative">
+					<input
+						ref={fileInputRef}
+						type="file"
+						multiple
+						className="hidden"
+						onChange={handleFileSelect}
+						accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt"
+					/>
 
-				{/* Overlay buttons */}
-				<div className="absolute bottom-2 right-2 flex items-center gap-1">
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className="h-8 w-8"
-						onClick={() => fileInputRef.current?.click()}
-						disabled={sending}>
-						<Paperclip className="h-4 w-4" />
-					</Button>
+					<Textarea
+						ref={textareaRef}
+						value={content}
+						onChange={handleContentChange}
+						onKeyDown={handleKeyPress}
+						placeholder={
+							disabled
+								? "This thread is archived (read-only)"
+								: threadId
+								? "Type a reply..."
+								: "Type a message... (Markdown supported, type @ to mention)"
+						}
+						className="flex-1 min-h-[60px] max-h-[200px] resize-none pr-24"
+						disabled={sending || disabled}
+					/>
 
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className="h-8 w-8"
-						onClick={() => setShowGifPicker(true)}
-						disabled={sending}>
-						<ImageIcon className="h-4 w-4" />
-					</Button>
+					{/* Overlay buttons */}
+					<div className="absolute bottom-2 right-2 flex items-center gap-1">
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="h-8 w-8"
+							onClick={() => fileInputRef.current?.click()}
+							disabled={sending || disabled}>
+							<Paperclip className="h-4 w-4" />
+						</Button>
 
-					<Button
-						type="button"
-						variant="ghost"
-						size="icon"
-						className="h-8 w-8"
-						onClick={handleSend}
-						disabled={sending || (!content.trim() && files.length === 0)}>
-						<Send className="h-4 w-4" />
-					</Button>
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="h-8 w-8"
+							onClick={() => setShowVoiceRecorder(true)}
+							disabled={sending || disabled}>
+							<Mic className="h-4 w-4" />
+						</Button>
+
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="h-8 w-8"
+							onClick={() => setShowGifPicker(true)}
+							disabled={sending || disabled}>
+							<ImageIcon className="h-4 w-4" />
+						</Button>
+
+						<Button
+							type="button"
+							variant="ghost"
+							size="icon"
+							className="h-8 w-8"
+							onClick={handleSend}
+							disabled={sending || disabled || (!content.trim() && files.length === 0)}>
+							<Send className="h-4 w-4" />
+						</Button>
+					</div>
 				</div>
-			</div>
 
-			<p className="text-xs text-muted-foreground">
-				Press <kbd className="px-1 rounded bg-muted">Enter</kbd> to send,{" "}
-				<kbd className="px-1 rounded bg-muted">Shift+Enter</kbd> for new line,{" "}
-				<kbd className="px-1 rounded bg-muted">@</kbd> to mention
-			</p>
+				<p className="text-xs text-muted-foreground">
+					Press <kbd className="px-1 rounded bg-muted">Enter</kbd> to send,{" "}
+					<kbd className="px-1 rounded bg-muted">Shift+Enter</kbd> for new line,{" "}
+					<kbd className="px-1 rounded bg-muted">@</kbd> to mention
+				</p>
 			</div>
 		</div>
 	);

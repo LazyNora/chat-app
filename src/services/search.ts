@@ -71,7 +71,7 @@ export async function searchGroupMessages(
 
 	// Resolve user filter (from query operators)
 	let userIdFilter: string | undefined = finalFilters.userId;
-	const fromMatch = query.match(/from:@(\w+)/i);
+	const fromMatch = searchQuery.match(/from:@(\w+)/i);
 	if (fromMatch && !userIdFilter) {
 		const username = fromMatch[1];
 		const member = members.find((m) => m.displayName.toLowerCase() === username.toLowerCase());
@@ -80,7 +80,7 @@ export async function searchGroupMessages(
 
 	// Resolve channel filter (from query operators)
 	let channelIdFilter: string | undefined = finalFilters.channelId;
-	const inMatch = query.match(/in:#(\w+)/i);
+	const inMatch = searchQuery.match(/in:#(\w+)/i);
 	if (inMatch && !channelIdFilter) {
 		const channelName = inMatch[1];
 		const channel = channels.find((c) => c.name.toLowerCase() === channelName.toLowerCase());

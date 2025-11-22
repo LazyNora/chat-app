@@ -11,7 +11,7 @@ createRoot(document.getElementById("root")!).render(
 		<ThemeProvider defaultTheme="dark" storageKey="chat-app-theme">
 			<BrowserRouter>
 				<App />
-				<Toaster richColors />
+				<Toaster />
 			</BrowserRouter>
 		</ThemeProvider>
 	</StrictMode>

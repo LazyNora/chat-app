@@ -30,7 +30,7 @@ export function MessageReactions({ onReaction }: MessageReactionsProps) {
 					<Smile className="h-4 w-4" />
 				</Button>
 			</PopoverTrigger>
-			<PopoverContent className="w-fit p-0" align="start">
+			<PopoverContent className="w-fit p-0" align="end">
 				<EmojiPicker
 					className="h-[342px]"
 					onEmojiSelect={({ emoji }) => {

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
 	Popover,
 	PopoverContent,
@@ -11,6 +12,9 @@ import { Separator } from "@/components/ui/separator";
 import { MessageSquare, UserPlus, Settings } from "lucide-react";
 import { getUserProfile } from "@/services/auth";
 import { usePresenceStore } from "@/stores/presenceStore";
+import { useAuthStore } from "@/stores/authStore";
+import { getOrCreateDMConversation, sendFriendRequest } from "@/services/friends";
+import { toast } from "sonner";
 import type { GroupMember, Role } from "@/types";
 import { formatDistance } from "date-fns";
 
@@ -33,8 +37,11 @@ export function MemberProfilePopover({
 }: MemberProfilePopoverProps) {
 	const [userProfile, setUserProfile] = useState<any>(null);
 	const { getOnlineStatus } = usePresenceStore();
+	const { user, userProfile: currentUserProfile } = useAuthStore();
+	const navigate = useNavigate();
 	const onlineStatus = getOnlineStatus(member.userId);
 	const memberRoles = roles.filter((r) => member.roles.includes(r.id));
+	const isSelf = user?.uid === member.userId;
 
 	useEffect(() => {
 		const loadProfile = async () => {
@@ -134,26 +141,63 @@ export function MemberProfilePopover({
 					<Separator />
 
 					{/* Actions */}
-					<div className="flex gap-2">
-						<Button
-							variant="outline"
-							size="sm"
-							className="flex-1"
-							onClick={onSendDM}>
-							<MessageSquare className="h-4 w-4 mr-2" />
-							Message
-						</Button>
-						{onManageRoles && (
-							<Button
-								variant="outline"
-								size="sm"
-								className="flex-1"
-								onClick={onManageRoles}>
-								<Settings className="h-4 w-4 mr-2" />
-								Roles
-							</Button>
-						)}
-					</div>
+					{!isSelf && (
+						<div className="flex flex-col gap-2">
+							<div className="flex gap-2">
+								<Button
+									variant="outline"
+									size="sm"
+									className="flex-1"
+									onClick={async () => {
+										if (!user || !currentUserProfile || !userProfile) return;
+										try {
+											const conversationId = await getOrCreateDMConversation(
+												user.uid,
+												currentUserProfile.displayName,
+												currentUserProfile.photoURL,
+												member.userId,
+												userProfile.displayName || member.displayName,
+												userProfile.photoURL || member.photoURL
+											);
+											navigate(`/messages/${conversationId}`);
+										} catch (error: any) {
+											console.error("Error opening DM:", error);
+											toast.error(error.message || "Failed to open DM");
+										}
+									}}>
+									<MessageSquare className="h-4 w-4 mr-2" />
+									Message
+								</Button>
+								<Button
+									variant="outline"
+									size="sm"
+									className="flex-1"
+									onClick={async () => {
+										if (!user) return;
+										try {
+											await sendFriendRequest(user.uid, member.userId);
+											toast.success("Friend request sent");
+										} catch (error: any) {
+											console.error("Error sending friend request:", error);
+											toast.error(error.message || "Failed to send friend request");
+										}
+									}}>
+									<UserPlus className="h-4 w-4 mr-2" />
+									Add Friend
+								</Button>
+							</div>
+							{onManageRoles && (
+								<Button
+									variant="outline"
+									size="sm"
+									className="w-full"
+									onClick={onManageRoles}>
+									<Settings className="h-4 w-4 mr-2" />
+									Manage Roles
+								</Button>
+							)}
+						</div>
+					)}
 				</div>
 			</PopoverContent>
 		</Popover>

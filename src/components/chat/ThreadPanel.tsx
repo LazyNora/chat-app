@@ -1,16 +1,24 @@
 import { useState, useEffect, useRef } from "react";
-import { X, MessageSquare, Archive, Maximize2, Loader2 } from "lucide-react";
+import { X, MessageSquare, Archive, Maximize2, Loader2, ArchiveRestore } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { getThread, sendThreadMessage, toggleThreadArchive } from "@/services/threads";
+import { toggleThreadArchive } from "@/services/threads";
 import { getMessage } from "@/services/messages";
 import { MessageItem } from "./MessageItem";
+import { MessageInput } from "./MessageInput";
 import type { Thread, Message } from "@/types";
-import { useAuthStore } from "@/stores/authStore";
 import { toast } from "sonner";
 import { formatDistance } from "date-fns";
-import { collection, query, where, orderBy, onSnapshot, doc, onSnapshot as onDocSnapshot } from "firebase/firestore";
+import {
+	collection,
+	query,
+	where,
+	orderBy,
+	onSnapshot,
+	doc,
+	onSnapshot as onDocSnapshot,
+} from "firebase/firestore";
 import { db } from "@/services/firebase";
 
 interface ThreadPanelProps {
@@ -21,14 +29,18 @@ interface ThreadPanelProps {
 	onFullView?: () => void;
 }
 
-export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView }: ThreadPanelProps) {
+export function ThreadPanel({
+	groupId,
+	channelId,
+	threadId,
+	onClose,
+	onFullView,
+}: ThreadPanelProps) {
 	const [thread, setThread] = useState<Thread | null>(null);
 	const [parentMessage, setParentMessage] = useState<Message | null>(null);
 	const [messages, setMessages] = useState<Message[]>([]);
 	const [loading, setLoading] = useState(true);
-	const [threadContent, setThreadContent] = useState("");
 	const messagesEndRef = useRef<HTMLDivElement>(null);
-	const { user, userProfile } = useAuthStore();
 
 	// Real-time thread updates
 	useEffect(() => {
@@ -59,11 +71,7 @@ export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView 
 			db,
 			`groups/${groupId}/channels/${channelId}/threads/${threadId}/messages`
 		);
-		const q = query(
-			messagesRef,
-			where("deleted", "==", false),
-			orderBy("createdAt", "asc")
-		);
+		const q = query(messagesRef, where("deleted", "==", false), orderBy("createdAt", "asc"));
 
 		const unsubscribe = onSnapshot(q, (snapshot) => {
 			const msgs = snapshot.docs.map((doc) => ({
@@ -78,39 +86,6 @@ export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView 
 
 		return () => unsubscribe();
 	}, [threadId, groupId, channelId]);
-
-	const handleArchive = async () => {
-		if (!thread) return;
-
-		try {
-			await toggleThreadArchive(groupId, channelId, threadId, true);
-			toast.success("Thread archived");
-			onClose();
-		} catch (error) {
-			console.error("Error archiving thread:", error);
-			toast.error("Failed to archive thread");
-		}
-	};
-
-	const handleSendMessage = async () => {
-		if (!user || !userProfile || !threadContent.trim()) return;
-
-		try {
-			await sendThreadMessage(
-				groupId,
-				channelId,
-				threadId,
-				user.uid,
-				userProfile.displayName,
-				userProfile.photoURL,
-				threadContent.trim()
-			);
-			setThreadContent("");
-		} catch (error) {
-			console.error("Error sending thread message:", error);
-			toast.error("Failed to send message");
-		}
-	};
 
 	if (loading) {
 		return (
@@ -141,11 +116,22 @@ export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView 
 				<div className="flex items-center gap-2">
 					<MessageSquare className="h-5 w-5" />
 					<div>
-						<h3 className="font-semibold">Thread</h3>
+						<div className="flex items-center gap-2">
+							<h3 className="font-semibold">Thread</h3>
+							{thread.archived && (
+								<span className="text-xs px-2 py-0.5 bg-muted rounded-full text-muted-foreground">
+									Archived
+								</span>
+							)}
+						</div>
 						<p className="text-xs text-muted-foreground">
 							{thread.messageCount} {thread.messageCount === 1 ? "message" : "messages"}
 							{thread.lastMessageAt && (
-								<> • Last message {formatDistance(thread.lastMessageAt.toDate(), new Date(), { addSuffix: true })}</>
+								<>
+									{" "}
+									• Last message{" "}
+									{formatDistance(thread.lastMessageAt.toDate(), new Date(), { addSuffix: true })}
+								</>
 							)}
 						</p>
 					</div>
@@ -156,8 +142,25 @@ export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView 
 							<Maximize2 className="h-4 w-4" />
 						</Button>
 					)}
-					<Button size="icon" variant="ghost" onClick={handleArchive}>
-						<Archive className="h-4 w-4" />
+					<Button
+						size="icon"
+						variant="ghost"
+						onClick={async () => {
+							if (!thread) return;
+							try {
+								await toggleThreadArchive(groupId, channelId, threadId, !thread.archived);
+								toast.success(thread.archived ? "Thread unarchived" : "Thread archived");
+							} catch (error) {
+								console.error("Error toggling thread archive:", error);
+								toast.error("Failed to toggle archive");
+							}
+						}}
+						title={thread.archived ? "Unarchive thread" : "Archive thread"}>
+						{thread.archived ? (
+							<ArchiveRestore className="h-4 w-4" />
+						) : (
+							<Archive className="h-4 w-4" />
+						)}
 					</Button>
 					<Button size="icon" variant="ghost" onClick={onClose}>
 						<X className="h-4 w-4" />
@@ -167,7 +170,9 @@ export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView 
 
 			{/* Parent Message */}
 			<div className="p-4 bg-muted/30">
-				<div className="text-xs text-muted-foreground mb-2">Thread started by {parentMessage.senderName}</div>
+				<div className="text-xs text-muted-foreground mb-2">
+					Thread started by {parentMessage.senderName}
+				</div>
 				<MessageItem
 					message={parentMessage}
 					groupId={groupId}
@@ -186,7 +191,8 @@ export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView 
 						const showAvatar =
 							index === 0 ||
 							prevMessage?.senderId !== message.senderId ||
-							(message.createdAt && prevMessage?.createdAt &&
+							(message.createdAt &&
+								prevMessage?.createdAt &&
 								message.createdAt.toMillis() - prevMessage.createdAt.toMillis() > 300000);
 						return (
 							<MessageItem
@@ -207,27 +213,13 @@ export function ThreadPanel({ groupId, channelId, threadId, onClose, onFullView 
 				</div>
 			</ScrollArea>
 
-			{/* Message Input for Thread */}
-			<div className="border-t p-4">
-				<div className="flex gap-2">
-					<textarea
-						value={threadContent}
-						onChange={(e) => setThreadContent(e.target.value)}
-						placeholder="Type a reply..."
-						className="flex-1 min-h-[60px] max-h-[200px] resize-none p-2 rounded border bg-background"
-						onKeyDown={(e) => {
-							if (e.key === "Enter" && !e.shiftKey) {
-								e.preventDefault();
-								handleSendMessage();
-							}
-						}}
-					/>
-					<Button onClick={handleSendMessage} disabled={!threadContent.trim()}>
-						Send
-					</Button>
-				</div>
-			</div>
+			{/* Message Input for Thread - using same component as main input */}
+			<MessageInput
+				groupId={groupId}
+				channelId={channelId}
+				threadId={threadId}
+				disabled={thread.archived}
+			/>
 		</div>
 	);
 }
-

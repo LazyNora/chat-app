@@ -3,15 +3,14 @@ import { Search, X, Filter, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-	Dialog,
-	DialogContent,
-	DialogHeader,
-	DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { SearchFilters as SearchFiltersComponent } from "./SearchFilters";
 import { SearchResults } from "./SearchResults";
-import { searchGroupMessages, type SearchResult, type SearchFilters as SearchFiltersType } from "@/services/search";
+import {
+	searchGroupMessages,
+	type SearchResult,
+	type SearchFilters as SearchFiltersType,
+} from "@/services/search";
 import { useGroupStore } from "@/stores/groupStore";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
@@ -71,8 +70,8 @@ export function SearchModal({ open, onOpenChange, onJumpToMessage }: SearchModal
 	}, [query, filters, selectedGroupId]);
 
 	const handleJumpToMessage = (result: SearchResult) => {
-		if (onJumpToMessage) {
-			onJumpToMessage(selectedGroupId!, result.channel.id, result.message.id);
+		if (onJumpToMessage && selectedGroupId) {
+			onJumpToMessage(selectedGroupId, result.channel.id, result.message.id);
 			onOpenChange(false);
 		}
 	};
@@ -105,9 +104,7 @@ export function SearchModal({ open, onOpenChange, onJumpToMessage }: SearchModal
 					</div>
 
 					{/* Filters */}
-					{showFilters && (
-						<SearchFiltersComponent filters={filters} onFiltersChange={setFilters} />
-					)}
+					{showFilters && <SearchFiltersComponent filters={filters} onFiltersChange={setFilters} />}
 
 					{/* Results */}
 					<ScrollArea className="flex-1 min-h-[300px] max-h-[500px]">
@@ -116,9 +113,7 @@ export function SearchModal({ open, onOpenChange, onJumpToMessage }: SearchModal
 								<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
 							</div>
 						) : results.length === 0 && query.trim() ? (
-							<div className="text-center py-8 text-muted-foreground">
-								No messages found
-							</div>
+							<div className="text-center py-8 text-muted-foreground">No messages found</div>
 						) : results.length > 0 ? (
 							<SearchResults
 								results={results}
@@ -136,4 +131,3 @@ export function SearchModal({ open, onOpenChange, onJumpToMessage }: SearchModal
 		</Dialog>
 	);
 }
-

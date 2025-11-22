@@ -8,7 +8,8 @@ import {
 	type User as FirebaseUser,
 } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp, Timestamp } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { auth, db, storage } from "./firebase";
 import { type User, type UserSettings } from "@/types";
 
 const googleProvider = new GoogleAuthProvider();
@@ -170,6 +171,52 @@ export async function updateCustomStatus(
 		{
 			customStatus,
 			customStatusEmoji,
+			updatedAt: serverTimestamp(),
+		},
+		{ merge: true }
+	);
+}
+
+// Upload profile picture
+export async function uploadProfilePicture(userId: string, file: File): Promise<string> {
+	const timestamp = Date.now();
+	const fileName = `profile_${timestamp}_${file.name}`;
+	const filePath = `users/${userId}/profile/${fileName}`;
+	const fileRef = ref(storage, filePath);
+
+	await uploadBytes(fileRef, file);
+	const downloadURL = await getDownloadURL(fileRef);
+
+	// Update user profile
+	const userRef = doc(db, "users", userId);
+	await setDoc(
+		userRef,
+		{
+			photoURL: downloadURL,
+			updatedAt: serverTimestamp(),
+		},
+		{ merge: true }
+	);
+
+	// Update Firebase Auth profile
+	const firebaseUser = auth.currentUser;
+	if (firebaseUser) {
+		await updateProfile(firebaseUser, { photoURL: downloadURL });
+	}
+
+	return downloadURL;
+}
+
+// Update user settings
+export async function updateUserSettings(
+	userId: string,
+	settings: Partial<UserSettings>
+): Promise<void> {
+	const userRef = doc(db, "users", userId);
+	await setDoc(
+		userRef,
+		{
+			settings,
 			updatedAt: serverTimestamp(),
 		},
 		{ merge: true }

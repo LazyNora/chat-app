@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, X, Loader2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,42 +25,80 @@ export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {
 	const [gifs, setGifs] = useState<TenorGif[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [hasMore, setHasMore] = useState(true);
+	const [next, setNext] = useState<string | null>(null);
+	const scrollAreaRef = useRef<HTMLDivElement>(null);
+	const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
 	// Tenor API key - in production, this should be in environment variables
 	const TENOR_API_KEY = import.meta.env.VITE_TENOR_API_KEY || "AIzaSyAhR-CU3EyEAD6dyNH";
 
+	// Keep search query when reopening
 	useEffect(() => {
-		if (open) {
-			// Load trending GIFs on open
-			loadTrendingGifs();
+		if (!open) return;
+
+		if (searchQuery.trim()) {
+			// Reload with current search when reopening
+			searchGifs(searchQuery, true);
+		} else {
+			// Load trending GIFs on open if no search
+			loadTrendingGifs(true);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [open]);
 
+	// Debounced search
 	useEffect(() => {
-		if (searchQuery) {
-			const timeoutId = setTimeout(() => {
-				searchGifs();
-			}, 500);
-
-			return () => clearTimeout(timeoutId);
+		if (debounceTimerRef.current) {
+			clearTimeout(debounceTimerRef.current);
 		}
+
+		if (searchQuery.trim()) {
+			debounceTimerRef.current = setTimeout(() => {
+				searchGifs(searchQuery, true);
+			}, 500);
+		} else if (searchQuery === "") {
+			// Clear search - reset to trending
+			setGifs([]);
+			setNext(null);
+			loadTrendingGifs(true);
+		}
+
+		return () => {
+			if (debounceTimerRef.current) {
+				clearTimeout(debounceTimerRef.current);
+			}
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [searchQuery]);
 
-	const loadTrendingGifs = async () => {
+	const loadTrendingGifs = async (reset = false) => {
 		try {
-			setLoading(true);
+			if (reset) {
+				setLoading(true);
+				setGifs([]);
+			}
 			setError(null);
 
-			const response = await fetch(
-				`https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&limit=20&media_filter=gif`
-			);
+			const url =
+				next && !reset
+					? `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&limit=20&media_filter=gif&pos=${next}`
+					: `https://tenor.googleapis.com/v2/featured?key=${TENOR_API_KEY}&limit=20&media_filter=gif`;
+
+			const response = await fetch(url);
 
 			if (!response.ok) {
 				throw new Error("Failed to load trending GIFs");
 			}
 
 			const data = await response.json();
-			setGifs(data.results || []);
+			if (reset) {
+				setGifs(data.results || []);
+			} else {
+				setGifs((prev) => [...prev, ...(data.results || [])]);
+			}
+			setNext(data.next || null);
+			setHasMore(!!data.next);
 		} catch (err) {
 			console.error("Error loading trending GIFs:", err);
 			setError("Failed to load GIFs. Please try again.");
@@ -69,28 +107,42 @@ export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {
 		}
 	};
 
-	const searchGifs = async () => {
-		if (!searchQuery.trim()) {
-			loadTrendingGifs();
+	const searchGifs = async (query: string, reset = false) => {
+		if (!query.trim()) {
+			loadTrendingGifs(reset);
 			return;
 		}
 
 		try {
-			setLoading(true);
+			if (reset) {
+				setLoading(true);
+				setGifs([]);
+			}
 			setError(null);
 
-			const response = await fetch(
-				`https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(
-					searchQuery
-				)}&key=${TENOR_API_KEY}&limit=20&media_filter=gif`
-			);
+			const url =
+				next && !reset
+					? `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(
+							query
+					  )}&key=${TENOR_API_KEY}&limit=20&media_filter=gif&pos=${next}`
+					: `https://tenor.googleapis.com/v2/search?q=${encodeURIComponent(
+							query
+					  )}&key=${TENOR_API_KEY}&limit=20&media_filter=gif`;
+
+			const response = await fetch(url);
 
 			if (!response.ok) {
 				throw new Error("Failed to search GIFs");
 			}
 
 			const data = await response.json();
-			setGifs(data.results || []);
+			if (reset) {
+				setGifs(data.results || []);
+			} else {
+				setGifs((prev) => [...prev, ...(data.results || [])]);
+			}
+			setNext(data.next || null);
+			setHasMore(!!data.next);
 		} catch (err) {
 			console.error("Error searching GIFs:", err);
 			setError("Failed to search GIFs. Please try again.");
@@ -98,6 +150,23 @@ export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {
 			setLoading(false);
 		}
 	};
+
+	const handleScroll = useCallback(
+		(e: React.UIEvent<HTMLDivElement>) => {
+			const target = e.currentTarget;
+			const scrollBottom = target.scrollHeight - target.scrollTop - target.clientHeight;
+
+			if (scrollBottom < 100 && !loading && hasMore) {
+				if (searchQuery.trim()) {
+					searchGifs(searchQuery, false);
+				} else {
+					loadTrendingGifs(false);
+				}
+			}
+		},
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[loading, hasMore, searchQuery]
+	);
 
 	const handleSelect = (gif: TenorGif) => {
 		onSelect(gif.media_formats.gif.url);
@@ -118,30 +187,35 @@ export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {
 						value={searchQuery}
 						onChange={(e) => setSearchQuery(e.target.value)}
 						placeholder="Search for GIFs..."
-						className="pl-10"
+						className="pl-10 pr-10"
 					/>
 					{searchQuery && (
 						<Button
 							size="icon"
 							variant="ghost"
 							className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
-							onClick={() => setSearchQuery("")}>
+							onClick={() => {
+								setSearchQuery("");
+								setNext(null);
+								setGifs([]);
+								loadTrendingGifs(true);
+							}}>
 							<X className="h-4 w-4" />
 						</Button>
 					)}
 				</div>
 
 				{/* GIF Grid */}
-				<ScrollArea className="flex-1">
+				<ScrollArea className="flex-1" onScroll={handleScroll} ref={scrollAreaRef}>
 					{error ? (
 						<div className="flex flex-col items-center justify-center h-full text-center p-8">
 							<ImageIcon className="h-12 w-12 text-muted-foreground mb-4" />
 							<p className="text-muted-foreground">{error}</p>
-							<Button onClick={loadTrendingGifs} variant="outline" className="mt-4">
+							<Button onClick={() => loadTrendingGifs(true)} variant="outline" className="mt-4">
 								Try Again
 							</Button>
 						</div>
-					) : loading ? (
+					) : gifs.length === 0 && loading ? (
 						<div className="flex items-center justify-center h-full">
 							<Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
 						</div>
@@ -153,7 +227,7 @@ export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {
 							</p>
 						</div>
 					) : (
-						<div className="grid grid-cols-2 gap-2 p-2">
+						<div className="grid grid-cols-4 gap-2 p-2">
 							{gifs.map((gif) => (
 								<button
 									key={gif.id}
@@ -166,6 +240,11 @@ export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {
 									/>
 								</button>
 							))}
+							{loading && (
+								<div className="col-span-4 flex items-center justify-center py-4">
+									<Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+								</div>
+							)}
 						</div>
 					)}
 				</ScrollArea>
@@ -178,4 +257,3 @@ export function GifPicker({ open, onClose, onSelect }: GifPickerProps) {
 		</Dialog>
 	);
 }
-

@@ -2,12 +2,10 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { GroupList } from '@/components/groups/GroupList';
+import { UserProfile } from '@/components/user/UserProfile';
 import { useGroupStore } from '@/stores/groupStore';
 import { Button } from '@/components/ui/button';
-import { signOut } from '@/services/auth';
-import { toast } from 'sonner';
-import { LogOut, Settings, Plus } from 'lucide-react';
-import { ThemeSwitcher } from '@/components/theme-switcher';
+import { Plus } from 'lucide-react';
 import { CreateGroupModal } from '@/components/groups/CreateGroupModal';
 import { useState } from 'react';
 
@@ -27,15 +25,6 @@ export function Home() {
     return <Navigate to="/auth" replace />;
   }
 
-  const handleSignOut = async () => {
-    try {
-      await signOut();
-      toast.success('Signed out successfully');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to sign out');
-    }
-  };
-
   return (
     <>
       <div className="h-screen flex bg-background">
@@ -46,15 +35,6 @@ export function Home() {
           <div className="h-12 border-b flex items-center justify-between px-4">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-lg">Discord Clone</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ThemeSwitcher />
-              <Button variant="ghost" size="icon">
-                <Settings className="h-5 w-5" />
-              </Button>
-              <Button variant="ghost" size="icon" onClick={handleSignOut}>
-                <LogOut className="h-5 w-5" />
-              </Button>
             </div>
           </div>
 
@@ -72,6 +52,11 @@ export function Home() {
                 Create Group
               </Button>
             </div>
+          </div>
+
+          {/* Sticky User Profile at bottom */}
+          <div className="border-t bg-muted/30">
+            <UserProfile />
           </div>
         </div>
       </div>

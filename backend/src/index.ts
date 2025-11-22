@@ -4,6 +4,7 @@ import cors from "cors";
 import notificationsRouter from "./routes/notifications";
 import moderationRouter from "./routes/moderation";
 import webhooksRouter from "./routes/webhooks";
+import livekitRouter from "./routes/livekit";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/moderation", moderationRouter);
 app.use("/api/webhooks", webhooksRouter);
+app.use("/api/livekit", livekitRouter);
 
 // Health check
 app.get("/health", (req, res) => {
