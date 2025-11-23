@@ -13,10 +13,10 @@ export default defineConfig({
 			registerType: "autoUpdate",
 			includeAssets: ["favicon.ico", "robots.txt", "apple-touch-icon.png"],
 			manifest: {
-				name: "Discord Clone Chat App",
+				name: "A441 Chat",
 				short_name: "Chat App",
-				description: "A full-featured Discord/Slack clone with voice, video, and more",
-				theme_color: "#ffffff",
+				description: "A441 Chat Application",
+				theme_color: "#111827",
 				icons: [
 					{
 						src: "pwa-192x192.png",

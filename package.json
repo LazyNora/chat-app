@@ -1,7 +1,7 @@
 {
-  "name": "chat-app-v2",
+  "name": "a441-chat",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.1.0",
   "type": "module",
   "main": "electron/main.js",
   "scripts": {
@@ -16,8 +16,8 @@
     "electron:build:linux": "npm run build && electron-builder --linux"
   },
   "build": {
-    "appId": "com.chatapp.discord-clone",
-    "productName": "Discord Clone",
+    "appId": "com.chatapp.a441chat",
+    "productName": "A441 Chat",
     "files": [
       "dist/**/*",
       "electron/**/*"
