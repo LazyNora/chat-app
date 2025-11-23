@@ -35,7 +35,7 @@ export function DMMessageInput({
 
 	// Typing indicators
 	useDMTypingIndicators(conversationId);
-	const triggerTyping = useTypingTrigger(`presence-dm-${conversationId}`);
+	const { triggerTypingIndicator, stopTypingIndicator } = useTypingTrigger(`presence-dm-${conversationId}`);
 
 	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
@@ -62,7 +62,7 @@ export function DMMessageInput({
 	const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
 		setContent(e.target.value);
 		if (e.target.value.trim()) {
-			triggerTyping();
+			triggerTypingIndicator();
 		}
 	};
 
@@ -179,7 +179,7 @@ export function DMMessageInput({
 			{replyingTo && (
 				<ReplyPreview
 					message={replyingTo}
-					onCancel={onCancelReply}
+					onCancel={() => onCancelReply?.()}
 				/>
 			)}
 
@@ -216,7 +216,7 @@ export function DMMessageInput({
 					{/* GIF Picker */}
 					{showGifPicker && (
 						<div className="mb-2">
-							<GifPicker onSelect={handleGifSelect} onClose={() => setShowGifPicker(false)} />
+							<GifPicker open={showGifPicker} onSelect={handleGifSelect} onClose={() => setShowGifPicker(false)} />
 						</div>
 					)}
 

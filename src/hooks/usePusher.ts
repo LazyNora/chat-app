@@ -149,7 +149,7 @@ export function useDMTypingIndicators(conversationId: string | null) {
 // Hook to trigger typing indicator
 export function useTypingTrigger(conversationId: string | null, type: 'group' | 'dm' = 'group') {
   const { user, userProfile } = useAuthStore();
-  const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const typingTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerTypingIndicator = React.useCallback(() => {
     if (!conversationId || !user || !userProfile) return;

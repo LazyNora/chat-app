@@ -1,5 +1,6 @@
 // LiveKit service for voice/video calls
 import { Room } from "livekit-client";
+import { auth } from "./firebase";
 
 const LIVEKIT_URL = import.meta.env.VITE_LIVEKIT_URL || "";
 
@@ -26,7 +27,6 @@ export async function getLiveKitToken(
 	userId: string
 ): Promise<string> {
 	const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
-	const auth = (await import("./firebase")).auth;
 
 	const user = auth.currentUser;
 	if (!user) throw new Error("Not authenticated");
